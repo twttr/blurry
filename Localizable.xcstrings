@@ -1,0 +1,262 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "\n• ... and %lld more" : {
+
+    },
+    "%lld areas have been automatically re-enabled." : {
+
+    },
+    "1 area has been automatically re-enabled." : {
+
+    },
+    "Add New Area" : {
+
+    },
+    "Area '%@' has invalid blur radius: %lf" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Area '%1$@' has invalid blur radius: %2$lf"
+          }
+        }
+      }
+    },
+    "Area '%@' has invalid darken amount: %lf" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Area '%1$@' has invalid darken amount: %2$lf"
+          }
+        }
+      }
+    },
+    "Area '%@' has invalid dimensions (width: %lf, height: %lf)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Area '%1$@' has invalid dimensions (width: %2$lf, height: %3$lf)"
+          }
+        }
+      }
+    },
+    "Area '%@' references a non-existent image file: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Area '%1$@' references a non-existent image file: %2$@"
+          }
+        }
+      }
+    },
+    "Area %lld" : {
+
+    },
+    "Area %lld has an empty name" : {
+
+    },
+    "Areas" : {
+
+    },
+    "Blur" : {
+
+    },
+    "Blurry" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Change Effect" : {
+
+    },
+    "Choose a configuration file to import" : {
+
+    },
+    "Choose a location to save your configuration" : {
+
+    },
+    "Choose a window to create a blur area:" : {
+
+    },
+    "Configuration" : {
+
+    },
+    "Confirm Import" : {
+
+    },
+    "Create" : {
+
+    },
+    "Darken" : {
+
+    },
+    "Disable All" : {
+
+    },
+    "Display Disconnected" : {
+
+    },
+    "Display disconnected. %lld areas have been disabled." : {
+
+    },
+    "Display disconnected. Some areas have been disabled." : {
+
+    },
+    "Display Reconnected" : {
+
+    },
+    "e.g., Chat Window" : {
+
+    },
+    "Enable All" : {
+
+    },
+    "Enabled" : {
+
+    },
+    "Enter a name for the selected area:" : {
+
+    },
+    "Enter a name for this blur area:" : {
+
+    },
+    "Export" : {
+
+    },
+    "Export Blurry Configuration" : {
+
+    },
+    "Export Failed" : {
+
+    },
+    "Export Successful" : {
+
+    },
+    "Failed to export configuration: %@" : {
+
+    },
+    "Failed to read configuration file: %@" : {
+
+    },
+    "Global Hotkey: ⌘⇧B" : {
+
+    },
+    "High" : {
+
+    },
+    "Hover to Reveal" : {
+
+    },
+    "Import" : {
+
+    },
+    "Import Blurry Configuration" : {
+
+    },
+    "Import Failed" : {
+
+    },
+    "Import Successful" : {
+
+    },
+    "Invalid Configuration" : {
+
+    },
+    "Low" : {
+
+    },
+    "Manually" : {
+
+    },
+    "Medium" : {
+
+    },
+    "Name This Area" : {
+
+    },
+    "Name Your Area" : {
+
+    },
+    "No adjustable parameters" : {
+
+    },
+    "No selectable windows were found." : {
+
+    },
+    "No Windows Available" : {
+
+    },
+    "OK" : {
+
+    },
+    "Parameters" : {
+
+    },
+    "Picture" : {
+
+    },
+    "Preferences" : {
+
+    },
+    "Quit" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Resize Area" : {
+
+    },
+    "Select" : {
+
+    },
+    "Select Window" : {
+
+    },
+    "Some Areas Could Not Be Restored" : {
+
+    },
+    "Successfully exported %lld area(s) to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Successfully exported %1$lld area(s) to %2$@"
+          }
+        }
+      }
+    },
+    "Successfully imported %lld area(s)" : {
+
+    },
+    "The following areas were disabled because their displays are not available:\n\n• %@%@\n\nThese areas will automatically re-enable when their displays reconnect." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The following areas were disabled because their displays are not available:\n\n• %1$@%2$@\n\nThese areas will automatically re-enable when their displays reconnect."
+          }
+        }
+      }
+    },
+    "This will replace %lld existing area(s) with %lld imported area(s). This action cannot be undone. Continue?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will replace %1$lld existing area(s) with %2$lld imported area(s). This action cannot be undone. Continue?"
+          }
+        }
+      }
+    },
+    "Untitled Area" : {
+
+    }
+  },
+  "version" : "1.0"
+}
