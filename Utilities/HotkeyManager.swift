@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 class HotkeyManager {
   static let shared = HotkeyManager()
 

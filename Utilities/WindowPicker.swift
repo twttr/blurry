@@ -19,7 +19,7 @@ class WindowPicker {
     let windows = getAvailableWindows()
     
     if windows.isEmpty {
-      NotificationManager.shared.send(
+      await NotificationManager.shared.send(
         title: String(localized: "No Windows Available"),
         body: String(localized: "No selectable windows were found.")
       )

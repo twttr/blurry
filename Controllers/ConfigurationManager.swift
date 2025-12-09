@@ -5,21 +5,19 @@ protocol ConfigurationManagerDelegate: AnyObject {
   func configurationDidUpdate()
 }
 
-/// Manages configuration export and import functionality
 @MainActor
 class ConfigurationManager {
   private let areaManager: AreaManager
   weak var delegate: ConfigurationManagerDelegate?
-  
+
   init(areaManager: AreaManager, delegate: ConfigurationManagerDelegate) {
     self.areaManager = areaManager
     self.delegate = delegate
   }
-  
+
   // MARK: - Export
-  
-  /// Show export dialog and export configuration
-  func exportConfiguration() {
+
+  func exportConfiguration() async {
     let savePanel = NSSavePanel()
     savePanel.nameFieldStringValue = "BlurryConfig.json"
     savePanel.allowedContentTypes = [.json]
@@ -27,39 +25,38 @@ class ConfigurationManager {
     savePanel.isExtensionHidden = false
     savePanel.title = String(localized: "Export Blurry Configuration")
     savePanel.message = String(localized: "Choose a location to save your configuration")
-    
-    savePanel.begin { [weak self] response in
-      guard response == .OK, let url = savePanel.url else { return }
-      self?.performExport(to: url)
-    }
+
+    let response = savePanel.runModal()
+    guard response == .OK, let url = savePanel.url else { return }
+
+    await performExport(to: url)
   }
-  
-  private func performExport(to url: URL) {
+
+  private func performExport(to url: URL) async {
     let areas = areaManager.areas
-    
+
     do {
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
       let jsonData = try encoder.encode(areas)
-      
+
       try jsonData.write(to: url, options: .atomic)
 
-      NotificationManager.shared.send(
+      await NotificationManager.shared.send(
         title: String(localized: "Export Successful"),
         body: String(localized: "Successfully exported \(areas.count) area(s) to \(url.lastPathComponent)")
       )
     } catch {
-      NotificationManager.shared.send(
+      await NotificationManager.shared.send(
         title: String(localized: "Export Failed"),
         body: String(localized: "Failed to export configuration: \(error.localizedDescription)")
       )
     }
   }
-  
+
   // MARK: - Import
-  
-  /// Show import dialog and import configuration
-  func importConfiguration() {
+
+  func importConfiguration() async {
     let openPanel = NSOpenPanel()
     openPanel.canChooseFiles = true
     openPanel.canChooseDirectories = false
@@ -67,38 +64,38 @@ class ConfigurationManager {
     openPanel.allowedContentTypes = [.json]
     openPanel.title = String(localized: "Import Blurry Configuration")
     openPanel.message = String(localized: "Choose a configuration file to import")
-    
-    openPanel.begin { [weak self] response in
-      guard response == .OK, let url = openPanel.url else { return }
-      self?.performImport(from: url)
-    }
+
+    let response = openPanel.runModal()
+    guard response == .OK, let url = openPanel.url else { return }
+
+    await performImport(from: url)
   }
-  
-  private func performImport(from url: URL) {
+
+  private func performImport(from url: URL) async {
     do {
       let jsonData = try Data(contentsOf: url)
       let decoder = JSONDecoder()
       let importedAreas = try decoder.decode([BlurArea].self, from: jsonData)
-      
+
       guard let validationError = validateAreas(importedAreas) else {
-        showImportConfirmation(importedAreas: importedAreas)
+        await showImportConfirmation(importedAreas: importedAreas)
         return
       }
 
-      NotificationManager.shared.send(
+      await NotificationManager.shared.send(
         title: String(localized: "Invalid Configuration"),
         body: validationError
       )
     } catch {
-      NotificationManager.shared.send(
+      await NotificationManager.shared.send(
         title: String(localized: "Import Failed"),
         body: String(localized: "Failed to read configuration file: \(error.localizedDescription)")
       )
     }
   }
-  
+
   // MARK: - Validation
-  
+
   private func validateAreas(_ areas: [BlurArea]) -> String? {
     for (index, area) in areas.enumerated() {
       if area.name.isEmpty {
@@ -129,10 +126,10 @@ class ConfigurationManager {
 
     return nil
   }
-  
+
   // MARK: - Import Confirmation & Replacement
-  
-  private func showImportConfirmation(importedAreas: [BlurArea]) {
+
+  private func showImportConfirmation(importedAreas: [BlurArea]) async {
     let existingCount = areaManager.areas.count
     let importCount = importedAreas.count
 
@@ -145,37 +142,37 @@ class ConfigurationManager {
 
     let response = alert.runModal()
     if response == .alertFirstButtonReturn {
-      performImportReplacement(importedAreas: importedAreas)
+      await performImportReplacement(importedAreas: importedAreas)
     }
   }
-  
-  private func performImportReplacement(importedAreas: [BlurArea]) {
+
+  private func performImportReplacement(importedAreas: [BlurArea]) async {
     for area in areaManager.areas {
       if area.disableOnHover {
         MouseTracker.shared.stopTracking(areaID: area.id)
       }
     }
-    
+
     OverlayWindowManager.shared.removeAllWindows()
-    
+
     areaManager.replaceAll(with: importedAreas)
-    
+
     for area in importedAreas {
       recreateOverlayWindow(for: area)
-      
+
       if area.disableOnHover && area.isEnabled {
         MouseTracker.shared.startTracking(area: area)
       }
     }
-    
+
     delegate?.configurationDidUpdate()
 
-    NotificationManager.shared.send(
+    await NotificationManager.shared.send(
       title: String(localized: "Import Successful"),
       body: String(localized: "Successfully imported \(importedAreas.count) area(s)")
     )
   }
-  
+
   private func recreateOverlayWindow(for area: BlurArea) {
     guard area.isEnabled else { return }
 

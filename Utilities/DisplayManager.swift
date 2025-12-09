@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 class DisplayManager {
   static let shared = DisplayManager()
   
@@ -106,9 +107,5 @@ class DisplayManager {
   
   @objc private func screenConfigurationDidChange(_ notification: Notification) {
     onScreenConfigurationChanged?()
-  }
-  
-  deinit {
-    stopMonitoring()
   }
 }

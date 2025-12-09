@@ -1,13 +1,11 @@
 import Cocoa
 import UserNotifications
 
-class NotificationManager {
+actor NotificationManager {
   static let shared = NotificationManager()
 
   private var lastNotificationTimes: [String: Date] = [:]
   private let debounceInterval: TimeInterval = 2.0
-
-  private init() {}
 
   func requestPermissions() {
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }

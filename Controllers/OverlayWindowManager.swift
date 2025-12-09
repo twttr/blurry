@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 class OverlayWindowManager {
   static let shared = OverlayWindowManager()
 

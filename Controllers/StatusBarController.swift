@@ -499,11 +499,11 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   // MARK: - Configuration Export/Import
   
   @objc func exportConfiguration() {
-    configurationManager.exportConfiguration()
+    Task { await configurationManager.exportConfiguration() }
   }
-  
+
   @objc func importConfiguration() {
-    configurationManager.importConfiguration()
+    Task { await configurationManager.importConfiguration() }
   }
   
   // MARK: - ConfigurationManagerDelegate

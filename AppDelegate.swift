@@ -3,37 +3,38 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusBarController: StatusBarController!
   private let areaManager = AreaManager.shared
-  
+
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApplication.shared.setActivationPolicy(.accessory)
 
-    NotificationManager.shared.requestPermissions()
-    restoreBlurAreas()
+    Task {
+      await NotificationManager.shared.requestPermissions()
+      await restoreBlurAreas()
+    }
+
     statusBarController = StatusBarController(areaManager: areaManager)
-
     HotkeyManager.shared.registerHotkey()
-
     setupDisplayMonitoring()
   }
-  
+
   func applicationWillTerminate(_ notification: Notification) {
     HotkeyManager.shared.cleanup()
     DisplayManager.shared.cleanup()
     MouseTracker.shared.cleanup()
   }
-  
+
   func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
     return true
   }
-  
+
   private func setupDisplayMonitoring() {
     DisplayManager.shared.onScreenConfigurationChanged = { [weak self] in
-      self?.handleScreenConfigurationChange()
+      Task { await self?.handleScreenConfigurationChange() }
     }
     DisplayManager.shared.startMonitoring()
   }
-  
-  private func handleScreenConfigurationChange() {
+
+  private func handleScreenConfigurationChange() async {
     let availableDisplayIDs = Set(DisplayManager.shared.getAvailableDisplayIDs())
     var disabledCount = 0
     var enabledCount = 0
@@ -74,37 +75,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     if disabledCount > 0 {
-      showDisplayDisconnectedNotification(count: disabledCount)
+      await NotificationManager.shared.send(
+        title: String(localized: "Display Disconnected"),
+        body: disabledCount == 1
+          ? String(localized: "1 area has been disabled.")
+          : String(localized: "\(disabledCount) areas have been disabled."),
+        identifier: "display-disconnected",
+        debounce: true
+      )
     }
 
     if enabledCount > 0 {
-      showDisplayReconnectedNotification(count: enabledCount)
+      await NotificationManager.shared.send(
+        title: String(localized: "Display Reconnected"),
+        body: enabledCount == 1
+          ? String(localized: "1 area has been automatically re-enabled.")
+          : String(localized: "\(enabledCount) areas have been automatically re-enabled."),
+        identifier: "display-reconnected",
+        debounce: true
+      )
     }
   }
 
-  private func showDisplayReconnectedNotification(count: Int) {
-    NotificationManager.shared.send(
-      title: String(localized: "Display Reconnected"),
-      body: count == 1
-        ? String(localized: "1 area has been automatically re-enabled.")
-        : String(localized: "\(count) areas have been automatically re-enabled."),
-      identifier: "display-reconnected",
-      debounce: true
-    )
-  }
-
-  private func showDisplayDisconnectedNotification(count: Int) {
-    NotificationManager.shared.send(
-      title: String(localized: "Display Disconnected"),
-      body: count == 1
-        ? String(localized: "1 area has been disabled.")
-        : String(localized: "\(count) areas have been disabled."),
-      identifier: "display-disconnected",
-      debounce: true
-    )
-  }
-  
-  private func restoreBlurAreas() {
+  private func restoreBlurAreas() async {
     var unavailableDisplayAreas: [String] = []
 
     for area in areaManager.areas where area.isEnabled {
@@ -143,7 +136,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     if !unavailableDisplayAreas.isEmpty {
-      showUnavailableDisplaysNotification(areas: unavailableDisplayAreas)
+      await NotificationManager.shared.send(
+        title: String(localized: "Some Areas Could Not Be Restored"),
+        body: unavailableDisplayAreas.count == 1
+          ? String(localized: "1 area was disabled because its display is not available.")
+          : String(localized: "\(unavailableDisplayAreas.count) areas were disabled because their displays are not available."),
+        identifier: "areas-unavailable"
+      )
     }
   }
 
@@ -167,15 +166,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
     }
-  }
-
-  private func showUnavailableDisplaysNotification(areas: [String]) {
-    NotificationManager.shared.send(
-      title: String(localized: "Some Areas Could Not Be Restored"),
-      body: areas.count == 1
-        ? String(localized: "1 area was disabled because its display is not available.")
-        : String(localized: "\(areas.count) areas were disabled because their displays are not available."),
-      identifier: "areas-unavailable"
-    )
   }
 }

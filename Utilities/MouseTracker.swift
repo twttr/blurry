@@ -1,8 +1,6 @@
 import Cocoa
 
-/// Singleton class that tracks mouse movement and triggers callbacks when
-/// the mouse enters or exits registered disable areas.
-/// Only monitors mouse events when at least one disable area is being tracked.
+@MainActor
 class MouseTracker {
   static let shared = MouseTracker()
   
