@@ -66,7 +66,7 @@ class AreaMenuBuilder {
     
     menu.addItem(NSMenuItem.separator())
     
-    menu.addItem(createMenuItem(title: String(localized: "Quit"), action: #selector(AreaMenuDelegate.quit), keyEquivalent: "q"))
+    menu.addItem(createMenuItem(title: String(localized: "Quit"), action: #selector(AreaMenuDelegate.quit), keyEquivalent: ""))
     
     return menu
   }
