@@ -43,6 +43,7 @@
 				KeyMonitor.swift,
 				MouseTracker.swift,
 				NotificationManager.swift,
+				ScreenCaptureMonitor.swift,
 				VisualWindowPicker.swift,
 				WindowEnumerator.swift,
 				WindowPicker.swift,

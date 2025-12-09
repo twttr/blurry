@@ -29,11 +29,11 @@ class VisualWindowPicker: NSObject {
   
   private func showOverlay(completion: @escaping (WindowInfo?) -> Void) {
     currentCompletion = completion
-
+    
     keyMonitor.start(keyCode: 53) { [weak self] in
       self?.handleCancel()
     }
-
+    
     for screen in NSScreen.screens {
       let window = PickerOverlayWindow(
         contentRect: screen.frame,
@@ -46,18 +46,18 @@ class VisualWindowPicker: NSObject {
       window.level = .screenSaver
       window.ignoresMouseEvents = false
       window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-
+      
       let view = PickerOverlayView(frame: screen.frame, completion: completion)
       view.picker = self
       window.contentView = view
-
+      
       overlayWindows.append(window)
       window.makeKeyAndOrderFront(nil)
     }
-
+    
     NSCursor.pointingHand.set()
   }
-
+  
   private func handleCancel() {
     let completion = currentCompletion
     cleanup()
@@ -173,14 +173,14 @@ class PickerOverlayView: NSView {
     guard let screenLocation = window?.convertPoint(toScreen: event.locationInWindow) else { return }
     picker?.handleMouseMove(at: screenLocation)
   }
-
+  
   override func mouseDown(with event: NSEvent) {
     guard let screenLocation = window?.convertPoint(toScreen: event.locationInWindow) else { return }
     if let completion = completion {
       picker?.handleClick(at: screenLocation, completion: completion)
     }
   }
-
+  
   override func rightMouseDown(with event: NSEvent) {
     if let completion = completion {
       picker?.handleRightClick(completion: completion)

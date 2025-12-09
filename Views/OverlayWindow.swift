@@ -36,11 +36,11 @@ class OverlayWindow: NSWindow {
     get { false }
     set { }
   }
-
+  
   override var canBecomeKey: Bool {
     return !ignoresMouseEvents
   }
-
+  
   func setResizeMode(_ enabled: Bool, areaID: UUID, delegate: (any ResizeHandleDelegate)?) {
     if enabled {
       ignoresMouseEvents = false

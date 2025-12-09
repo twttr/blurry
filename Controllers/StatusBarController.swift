@@ -12,6 +12,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   private var menuBuilder: AreaMenuBuilder!
   private var parameterManager: EffectParameterManager!
   private var configurationManager: ConfigurationManager!
+  private var preScreenShareEnabledStates: [UUID: Bool]?
   
   init(areaManager: AreaManager) {
     self.areaManager = areaManager
@@ -39,6 +40,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     }
     
     initializeDisableTracking()
+    setupScreenCaptureMonitoring()
   }
   
   private func setupMouseTrackingCallbacks() {
@@ -55,6 +57,65 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     for area in areaManager.areas {
       if area.disableOnHover && area.isEnabled {
         MouseTracker.shared.startTracking(area: area)
+      }
+    }
+  }
+  
+  private func setupScreenCaptureMonitoring() {
+    guard UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare") else { return }
+    
+    ScreenCaptureMonitor.shared.onCaptureStateChanged = { [weak self] isCapturing in
+      if isCapturing {
+        self?.handleScreenShareStarted()
+      } else {
+        self?.handleScreenShareEnded()
+      }
+    }
+    ScreenCaptureMonitor.shared.startMonitoring()
+  }
+  
+  private func handleScreenShareStarted() {
+    preScreenShareEnabledStates = Dictionary(
+      uniqueKeysWithValues: areaManager.areas.map { ($0.id, $0.isEnabled) }
+    )
+    enableAllAreas()
+    MouseTracker.shared.stopAllTracking()
+  }
+  
+  private func handleScreenShareEnded() {
+    guard let savedStates = preScreenShareEnabledStates else { return }
+    for area in areaManager.areas {
+      let wasEnabled = savedStates[area.id] ?? false
+      if area.isEnabled != wasEnabled {
+        areaManager.toggleEnabled(for: area.id)
+        if let updatedArea = areaManager.areas.first(where: { $0.id == area.id }) {
+          OverlayWindowManager.shared.updateWindow(for: updatedArea)
+        }
+      }
+    }
+    
+    for area in areaManager.areas where area.disableOnHover && area.isEnabled {
+      MouseTracker.shared.startTracking(area: area)
+    }
+    
+    preScreenShareEnabledStates = nil
+  }
+  
+  func updateScreenCaptureMonitoring() {
+    if UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare") {
+      ScreenCaptureMonitor.shared.onCaptureStateChanged = { [weak self] isCapturing in
+        if isCapturing {
+          self?.handleScreenShareStarted()
+        } else {
+          self?.handleScreenShareEnded()
+        }
+      }
+      ScreenCaptureMonitor.shared.startMonitoring()
+    } else {
+      ScreenCaptureMonitor.shared.stopMonitoring()
+      ScreenCaptureMonitor.shared.onCaptureStateChanged = nil
+      if preScreenShareEnabledStates != nil {
+        handleScreenShareEnded()
       }
     }
   }
@@ -161,12 +222,12 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
       alert.messageText = String(localized: "Name Your Area")
       alert.informativeText = String(localized: "Enter a name for this blur area:")
       alert.alertStyle = .informational
-
+      
       let inputTextField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
       inputTextField.placeholderString = windowInfo.title.isEmpty ? windowInfo.ownerName : windowInfo.title
       inputTextField.stringValue = windowInfo.title.isEmpty ? windowInfo.ownerName : windowInfo.title
       alert.accessoryView = inputTextField
-
+      
       alert.addButton(withTitle: String(localized: "Create"))
       alert.addButton(withTitle: String(localized: "Cancel"))
       
@@ -185,81 +246,81 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   
   private func createBlurArea(rect: CGRect, name: String) {
     let displayID = DisplayManager.shared.getCurrentDisplayID(for: rect.origin)
-
+    
     var area = BlurArea(
       name: name,
       frame: rect,
       effectType: .blur(radius: 20.0)
     )
     area.displayID = displayID
-
+    
     if let displayID = displayID,
        let screen = DisplayManager.shared.getScreen(for: displayID) {
       area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
     }
-
+    
     areaManager.add(area)
-
+    
     guard let window = OverlayWindowManager.shared.createWindow(for: area) else { return }
-
+    
     let localBounds = CGRect(origin: .zero, size: area.frame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
     }
   }
-
+  
   private func createDarkenArea(rect: CGRect, name: String) {
     let displayID = DisplayManager.shared.getCurrentDisplayID(for: rect.origin)
-
+    
     var area = BlurArea(
       name: name,
       frame: rect,
       effectType: .darken(amount: 0.5)
     )
     area.displayID = displayID
-
+    
     if let displayID = displayID,
        let screen = DisplayManager.shared.getScreen(for: displayID) {
       area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
     }
-
+    
     areaManager.add(area)
-
+    
     guard let window = OverlayWindowManager.shared.createWindow(for: area) else { return }
-
+    
     let localBounds = CGRect(origin: .zero, size: area.frame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
     }
-
+    
   }
-
+  
   private func createPictureArea(rect: CGRect, name: String, imagePath: String) {
     let displayID = DisplayManager.shared.getCurrentDisplayID(for: rect.origin)
-
+    
     var area = BlurArea(
       name: name,
       frame: rect,
       effectType: .picture(imagePath: imagePath)
     )
     area.displayID = displayID
-
+    
     if let displayID = displayID,
        let screen = DisplayManager.shared.getScreen(for: displayID) {
       area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
     }
-
+    
     areaManager.add(area)
-
+    
     guard let window = OverlayWindowManager.shared.createWindow(for: area) else { return }
-
+    
     let localBounds = CGRect(origin: .zero, size: area.frame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
     }
-
+    
   }
-
+  
   @objc func toggleAreaEnabled(_ sender: NSMenuItem) {
     guard let areaID = sender.representedObject as? UUID else { return }
     areaManager.toggleEnabled(for: areaID)
@@ -297,11 +358,11 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   @objc func resizeArea(_ sender: NSMenuItem) {
     guard let areaID = sender.representedObject as? UUID else { return }
     guard let area = areaManager.areas.first(where: { $0.id == areaID }) else { return }
-
+    
     if area.disableOnHover {
       MouseTracker.shared.stopTracking(areaID: areaID)
     }
-
+    
     OverlayWindowManager.shared.disableAllResizeModes()
     OverlayWindowManager.shared.enableResizeMode(for: areaID, delegate: self)
   }
@@ -326,15 +387,15 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     guard let areaIndex = areaManager.areas.firstIndex(where: { $0.id == areaID }) else {
       return
     }
-
+    
     var area = areaManager.areas[areaIndex]
     area.frame = newFrame
-
+    
     if let displayID = area.displayID,
        let screen = DisplayManager.shared.getScreen(for: displayID) {
       area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
     }
-
+    
     areaManager.update(area)
     
     guard let window = OverlayWindowManager.shared.getWindow(for: areaID) else {
@@ -342,16 +403,16 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     }
     
     window.setFrame(newFrame, display: true)
-
+    
     window.contentView?.frame = NSRect(origin: .zero, size: newFrame.size)
-
+    
     window.contentView?.subviews.forEach { $0.removeFromSuperview() }
-
+    
     let localBounds = CGRect(origin: .zero, size: newFrame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
     }
-
+    
     setupMenu()
   }
   
@@ -472,7 +533,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     }
     
     window.contentView?.subviews.forEach { $0.removeFromSuperview() }
-
+    
     let localBounds = CGRect(origin: .zero, size: area.frame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
@@ -501,28 +562,35 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   @objc func exportConfiguration() {
     Task { await configurationManager.exportConfiguration() }
   }
-
+  
   @objc func importConfiguration() {
     Task { await configurationManager.importConfiguration() }
   }
   
+  @objc func toggleAutoBlurOnScreenShare(_ sender: NSMenuItem) {
+    let currentValue = UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare")
+    UserDefaults.standard.set(!currentValue, forKey: "AutoBlurOnScreenShare")
+    updateScreenCaptureMonitoring()
+    setupMenu()
+  }
+  
   // MARK: - ConfigurationManagerDelegate
-
+  
   func configurationDidUpdate() {
     setupMenu()
   }
-
+  
   func resizeHandleView(_ view: ResizeHandleView, didUpdateFrame frame: CGRect) {
     guard let window = OverlayWindowManager.shared.getWindow(for: view.areaID) else { return }
     window.setFrame(frame, display: true)
     window.contentView?.frame = NSRect(origin: .zero, size: frame.size)
   }
-
+  
   func resizeHandleView(_ view: ResizeHandleView, didExitResizeMode frame: CGRect) {
     let areaID = view.areaID
     OverlayWindowManager.shared.disableResizeMode(for: areaID)
     updateAreaFrame(areaID: areaID, newFrame: frame)
-
+    
     if let area = areaManager.areas.first(where: { $0.id == areaID }), area.disableOnHover {
       MouseTracker.shared.startTracking(area: area)
     }

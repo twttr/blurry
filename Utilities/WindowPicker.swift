@@ -25,7 +25,7 @@ class WindowPicker {
       )
       return nil
     }
-
+    
     let alert = NSAlert()
     alert.messageText = String(localized: "Select Window")
     alert.informativeText = String(localized: "Choose a window to create a blur area:")

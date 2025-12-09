@@ -16,7 +16,8 @@ import Cocoa
   
   func exportConfiguration()
   func importConfiguration()
-  
+  func toggleAutoBlurOnScreenShare(_ sender: NSMenuItem)
+
   func adjustParameters(_ sender: NSMenuItem)
   
   func changeEffect(_ sender: NSMenuItem)
@@ -84,7 +85,16 @@ class AreaMenuBuilder {
   
   private func createConfigurationSubmenu() -> NSMenu {
     let submenu = NSMenu()
-    
+
+    let autoBlurItem = createMenuItem(
+      title: String(localized: "Auto-blur on Screen Share"),
+      action: #selector(AreaMenuDelegate.toggleAutoBlurOnScreenShare(_:))
+    )
+    autoBlurItem.state = UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare") ? .on : .off
+    submenu.addItem(autoBlurItem)
+
+    submenu.addItem(NSMenuItem.separator())
+
     submenu.addItem(
       createMenuItem(
         title: String(localized: "Export"),
@@ -97,7 +107,7 @@ class AreaMenuBuilder {
         action: #selector(AreaMenuDelegate.importConfiguration)
       )
     )
-    
+
     return submenu
   }
   
