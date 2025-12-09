@@ -6,12 +6,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApplication.shared.setActivationPolicy(.accessory)
-    
+
+    NotificationManager.shared.requestPermissions()
     restoreBlurAreas()
     statusBarController = StatusBarController(areaManager: areaManager)
-    
+
     HotkeyManager.shared.registerHotkey()
-    
+
     setupDisplayMonitoring()
   }
   
@@ -82,27 +83,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func showDisplayReconnectedNotification(count: Int) {
-    let alert = NSAlert()
-    alert.messageText = String(localized: "Display Reconnected")
-    alert.informativeText = count == 1
-      ? String(localized: "1 area has been automatically re-enabled.")
-      : String(localized: "\(count) areas have been automatically re-enabled.")
-    alert.alertStyle = .informational
-    alert.addButton(withTitle: String(localized: "OK"))
-    alert.runModal()
+    NotificationManager.shared.send(
+      title: String(localized: "Display Reconnected"),
+      body: count == 1
+        ? String(localized: "1 area has been automatically re-enabled.")
+        : String(localized: "\(count) areas have been automatically re-enabled."),
+      identifier: "display-reconnected",
+      debounce: true
+    )
   }
-  
+
   private func showDisplayDisconnectedNotification(count: Int) {
-    let alert = NSAlert()
-    alert.messageText = String(localized: "Display Disconnected")
-    if count == 1 {
-      alert.informativeText = String(localized: "Display disconnected. Some areas have been disabled.")
-    } else {
-      alert.informativeText = String(localized: "Display disconnected. \(count) areas have been disabled.")
-    }
-    alert.alertStyle = .informational
-    alert.addButton(withTitle: String(localized: "OK"))
-    alert.runModal()
+    NotificationManager.shared.send(
+      title: String(localized: "Display Disconnected"),
+      body: count == 1
+        ? String(localized: "1 area has been disabled.")
+        : String(localized: "\(count) areas have been disabled."),
+      identifier: "display-disconnected",
+      debounce: true
+    )
   }
   
   private func restoreBlurAreas() {
@@ -171,23 +170,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func showUnavailableDisplaysNotification(areas: [String]) {
-    let alert = NSAlert()
-    alert.messageText = String(localized: "Some Areas Could Not Be Restored")
-
-    let areaList = areas.prefix(5).joined(separator: "\n• ")
-    let remainingCount = areas.count - 5
-    let suffix = areas.count > 5 ? String(localized: "\n• ... and \(remainingCount) more") : ""
-
-    alert.informativeText = String(localized: """
-      The following areas were disabled because their displays are not available:
-
-      • \(areaList)\(suffix)
-
-      These areas will automatically re-enable when their displays reconnect.
-      """)
-
-    alert.alertStyle = .informational
-    alert.addButton(withTitle: String(localized: "OK"))
-    alert.runModal()
+    NotificationManager.shared.send(
+      title: String(localized: "Some Areas Could Not Be Restored"),
+      body: areas.count == 1
+        ? String(localized: "1 area was disabled because its display is not available.")
+        : String(localized: "\(areas.count) areas were disabled because their displays are not available."),
+      identifier: "areas-unavailable"
+    )
   }
 }

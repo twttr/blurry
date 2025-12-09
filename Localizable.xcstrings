@@ -1,13 +1,22 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "\n• ... and %lld more" : {
-
-    },
     "%lld areas have been automatically re-enabled." : {
 
     },
+    "%lld areas have been disabled." : {
+
+    },
+    "%lld areas were disabled because their displays are not available." : {
+
+    },
     "1 area has been automatically re-enabled." : {
+
+    },
+    "1 area has been disabled." : {
+
+    },
+    "1 area was disabled because its display is not available." : {
 
     },
     "Add New Area" : {
@@ -99,12 +108,6 @@
 
     },
     "Display Disconnected" : {
-
-    },
-    "Display disconnected. %lld areas have been disabled." : {
-
-    },
-    "Display disconnected. Some areas have been disabled." : {
 
     },
     "Display Reconnected" : {
@@ -233,16 +236,6 @@
     },
     "Successfully imported %lld area(s)" : {
 
-    },
-    "The following areas were disabled because their displays are not available:\n\n• %@%@\n\nThese areas will automatically re-enable when their displays reconnect." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The following areas were disabled because their displays are not available:\n\n• %1$@%2$@\n\nThese areas will automatically re-enable when their displays reconnect."
-          }
-        }
-      }
     },
     "This will replace %lld existing area(s) with %lld imported area(s). This action cannot be undone. Continue?" : {
       "localizations" : {

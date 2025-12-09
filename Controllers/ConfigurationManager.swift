@@ -1,10 +1,8 @@
 import Cocoa
 import UniformTypeIdentifiers
 
-/// Protocol for configuration manager callbacks
 protocol ConfigurationManagerDelegate: AnyObject {
   func configurationDidUpdate()
-  func showAlert(title: String, message: String, style: NSAlert.Style)
 }
 
 /// Manages configuration export and import functionality
@@ -45,17 +43,15 @@ class ConfigurationManager {
       let jsonData = try encoder.encode(areas)
       
       try jsonData.write(to: url, options: .atomic)
-      
-      delegate?.showAlert(
+
+      NotificationManager.shared.send(
         title: String(localized: "Export Successful"),
-        message: String(localized: "Successfully exported \(areas.count) area(s) to \(url.lastPathComponent)"),
-        style: .informational
+        body: String(localized: "Successfully exported \(areas.count) area(s) to \(url.lastPathComponent)")
       )
     } catch {
-      delegate?.showAlert(
+      NotificationManager.shared.send(
         title: String(localized: "Export Failed"),
-        message: String(localized: "Failed to export configuration: \(error.localizedDescription)"),
-        style: .critical
+        body: String(localized: "Failed to export configuration: \(error.localizedDescription)")
       )
     }
   }
@@ -88,17 +84,15 @@ class ConfigurationManager {
         showImportConfirmation(importedAreas: importedAreas)
         return
       }
-      
-      delegate?.showAlert(
+
+      NotificationManager.shared.send(
         title: String(localized: "Invalid Configuration"),
-        message: validationError,
-        style: .critical
+        body: validationError
       )
     } catch {
-      delegate?.showAlert(
+      NotificationManager.shared.send(
         title: String(localized: "Import Failed"),
-        message: String(localized: "Failed to read configuration file: \(error.localizedDescription)"),
-        style: .critical
+        body: String(localized: "Failed to read configuration file: \(error.localizedDescription)")
       )
     }
   }
@@ -175,11 +169,10 @@ class ConfigurationManager {
     }
     
     delegate?.configurationDidUpdate()
-    
-    delegate?.showAlert(
+
+    NotificationManager.shared.send(
       title: String(localized: "Import Successful"),
-      message: String(localized: "Successfully imported \(importedAreas.count) area(s)"),
-      style: .informational
+      body: String(localized: "Successfully imported \(importedAreas.count) area(s)")
     )
   }
   

@@ -507,18 +507,9 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   }
   
   // MARK: - ConfigurationManagerDelegate
-  
+
   func configurationDidUpdate() {
     setupMenu()
-  }
-  
-  func showAlert(title: String, message: String, style: NSAlert.Style) {
-    let alert = NSAlert()
-    alert.messageText = title
-    alert.informativeText = message
-    alert.alertStyle = style
-    alert.addButton(withTitle: String(localized: "OK"))
-    alert.runModal()
   }
 
   func resizeHandleView(_ view: ResizeHandleView, didUpdateFrame frame: CGRect) {

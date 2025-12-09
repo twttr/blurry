@@ -13,12 +13,10 @@ class VisualWindowPicker: NSObject {
     self.currentWindows = getAvailableWindows()
     
     if currentWindows.isEmpty {
-      let alert = NSAlert()
-      alert.messageText = String(localized: "No Windows Available")
-      alert.informativeText = String(localized: "No selectable windows were found.")
-      alert.alertStyle = .informational
-      alert.addButton(withTitle: String(localized: "OK"))
-      alert.runModal()
+      NotificationManager.shared.send(
+        title: String(localized: "No Windows Available"),
+        body: String(localized: "No selectable windows were found.")
+      )
       return nil
     }
     
