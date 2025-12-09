@@ -3,15 +3,13 @@ import Foundation
 enum EffectType: Codable {
   case blur(radius: Double)
   case darken(amount: Double)
-  case picture(imagePath: String)
-  
-  // MARK: - Codable Implementation
-  
+  case picture(imageData: Data)
+
   enum CodingKeys: String, CodingKey {
     case type
     case radius
     case amount
-    case imagePath
+    case imageData
   }
   
   enum TypeValue: String, Codable {
@@ -30,9 +28,9 @@ enum EffectType: Codable {
     case .darken(let amount):
       try container.encode(TypeValue.darken, forKey: .type)
       try container.encode(amount, forKey: .amount)
-    case .picture(let imagePath):
+    case .picture(let imageData):
       try container.encode(TypeValue.picture, forKey: .type)
-      try container.encode(imagePath, forKey: .imagePath)
+      try container.encode(imageData, forKey: .imageData)
     }
   }
   
@@ -48,8 +46,8 @@ enum EffectType: Codable {
       let amount = try container.decode(Double.self, forKey: .amount)
       self = .darken(amount: amount)
     case .picture:
-      let imagePath = try container.decode(String.self, forKey: .imagePath)
-      self = .picture(imagePath: imagePath)
+      let imageData = try container.decode(Data.self, forKey: .imageData)
+      self = .picture(imageData: imageData)
     }
   }
   

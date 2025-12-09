@@ -22,6 +22,9 @@
     "Add New Area" : {
 
     },
+    "Area '%@' has empty image data" : {
+
+    },
     "Area '%@' has invalid blur radius: %lf" : {
       "localizations" : {
         "en" : {
@@ -48,16 +51,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Area '%1$@' has invalid dimensions (width: %2$lf, height: %3$lf)"
-          }
-        }
-      }
-    },
-    "Area '%@' references a non-existent image file: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Area '%1$@' references a non-existent image file: %2$@"
           }
         }
       }

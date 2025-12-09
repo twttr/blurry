@@ -4,7 +4,6 @@ import Cocoa
 @objc protocol AreaMenuDelegate: AnyObject {
   func addBlurArea()
   func addDarkenArea()
-  func addPictureArea()
   func addAreaFromWindow()
   
   func toggleAreaEnabled(_ sender: NSMenuItem)
@@ -134,9 +133,11 @@ class AreaMenuBuilder {
     enabledItem.state = area.isEnabled ? .on : .off
     submenu.addItem(enabledItem)
     
-    let parametersMenuItem = NSMenuItem(title: String(localized: "Parameters"), action: nil, keyEquivalent: "")
-    parametersMenuItem.submenu = buildParametersSubmenu(for: area)
-    submenu.addItem(parametersMenuItem)
+    if !area.effectType.isPicture {
+      let intensityMenuItem = NSMenuItem(title: String(localized: "Intensity"), action: nil, keyEquivalent: "")
+      intensityMenuItem.submenu = buildParametersSubmenu(for: area)
+      submenu.addItem(intensityMenuItem)
+    }
     
     let changeEffectMenuItem = NSMenuItem(title: String(localized: "Change Effect"), action: nil, keyEquivalent: "")
     changeEffectMenuItem.submenu = buildChangeEffectSubmenu(for: area)
@@ -216,7 +217,7 @@ class AreaMenuBuilder {
     let pictureItem = createMenuItem(
       title: String(localized: "Picture"),
       action: #selector(AreaMenuDelegate.changeEffect(_:)),
-      representedObject: ["areaID": area.id, "effectType": EffectType.picture(imagePath: "")] as [String: Any]
+      representedObject: ["areaID": area.id, "effectType": EffectType.picture(imageData: Data())] as [String: Any]
     )
     pictureItem.state = area.effectType.isPicture ? .on : .off
     submenu.addItem(pictureItem)

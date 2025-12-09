@@ -23,11 +23,10 @@ enum EffectViewFactory {
       )
       view = darkenEffectView
       
-    case .picture(let imagePath):
-      guard let image = NSImage(contentsOfFile: imagePath) else {
+    case .picture(let imageData):
+      guard let image = NSImage(data: imageData) else {
         return nil
       }
-      
       let pictureEffectView = PictureEffectView(frame: bounds)
       pictureEffectView.setImage(image)
       view = pictureEffectView

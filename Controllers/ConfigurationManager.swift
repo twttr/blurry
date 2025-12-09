@@ -116,10 +116,9 @@ class ConfigurationManager {
         if amount < 0 || amount > 1 {
           return String(localized: "Area '\(area.name)' has invalid darken amount: \(amount)")
         }
-      case .picture(let imagePath):
-        let fileManager = FileManager.default
-        if !fileManager.fileExists(atPath: imagePath) {
-          return String(localized: "Area '\(area.name)' references a non-existent image file: \(imagePath)")
+      case .picture(let imageData):
+        if imageData.isEmpty {
+          return String(localized: "Area '\(area.name)' has empty image data")
         }
       }
     }

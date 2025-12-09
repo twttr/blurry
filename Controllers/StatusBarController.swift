@@ -1,6 +1,5 @@
 import Cocoa
 import Combine
-import UniformTypeIdentifiers
 
 @MainActor
 class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, ResizeHandleDelegate {
@@ -185,29 +184,6 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     }
   }
   
-  @objc func addPictureArea() {
-    let openPanel = NSOpenPanel()
-    openPanel.canChooseFiles = true
-    openPanel.canChooseDirectories = false
-    openPanel.allowsMultipleSelection = false
-    openPanel.allowedContentTypes = [.png, .jpeg, .gif, .bmp, .tiff]
-    
-    if openPanel.runModal() == .OK, let url = openPanel.url {
-      let imagePath = url.path
-      let controller = AreaSelectionController()
-      currentSelectionController = controller
-      
-      Task { [weak self] in
-        if let result = await controller.beginSelection() {
-          self?.createPictureArea(rect: result.rect, name: result.name, imagePath: imagePath)
-          self?.currentSelectionController = nil
-        } else {
-          self?.currentSelectionController = nil
-        }
-      }
-    }
-  }
-  
   @objc func addAreaFromWindow() {
     let picker = VisualWindowPicker()
     currentWindowPicker = picker
@@ -294,33 +270,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     }
     
   }
-  
-  private func createPictureArea(rect: CGRect, name: String, imagePath: String) {
-    let displayID = DisplayManager.shared.getCurrentDisplayID(for: rect.origin)
-    
-    var area = BlurArea(
-      name: name,
-      frame: rect,
-      effectType: .picture(imagePath: imagePath)
-    )
-    area.displayID = displayID
-    
-    if let displayID = displayID,
-       let screen = DisplayManager.shared.getScreen(for: displayID) {
-      area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
-    }
-    
-    areaManager.add(area)
-    
-    guard let window = OverlayWindowManager.shared.createWindow(for: area) else { return }
-    
-    let localBounds = CGRect(origin: .zero, size: area.frame.size)
-    if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
-      window.contentView?.addSubview(effectView)
-    }
-    
-  }
-  
+
   @objc func toggleAreaEnabled(_ sender: NSMenuItem) {
     guard let areaID = sender.representedObject as? UUID else { return }
     areaManager.toggleEnabled(for: areaID)
@@ -469,78 +419,101 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
           let effectType = info["effectType"] as? EffectType else {
       return
     }
-    
+
     guard let area = areaManager.areas.first(where: { $0.id == areaID }) else {
       return
     }
-    
+
     if area.effectType.isSameKind(as: effectType) {
       return
     }
-    
+
     if effectType.isPicture {
-      let openPanel = NSOpenPanel()
-      openPanel.canChooseFiles = true
-      openPanel.canChooseDirectories = false
-      openPanel.allowsMultipleSelection = false
-      openPanel.allowedContentTypes = [.png, .jpeg, .gif, .bmp, .tiff]
-      
-      if openPanel.runModal() == .OK, let url = openPanel.url {
-        switchEffect(for: areaID, to: effectType, imagePath: url.path)
+      OverlayWindowManager.shared.getWindow(for: areaID)?.orderOut(nil)
+
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        guard let imageData = self?.captureScreenshot(of: area.frame) else {
+          OverlayWindowManager.shared.getWindow(for: areaID)?.orderFront(nil)
+          return
+        }
+        self?.switchEffect(for: areaID, to: effectType, imageData: imageData)
       }
       return
     }
-    
+
     switchEffect(for: areaID, to: effectType)
   }
-  
-  /// Switches an area's effect type while preserving its state (frame, name, enabled, disableOnHover)
-  /// Removes the old effect view and creates a new one based on the new effect type
-  private func switchEffect(for areaID: UUID, to newEffect: EffectType, imagePath: String? = nil) {
+
+  private func captureScreenshot(of frame: CGRect) -> Data? {
+    let mainDisplayBounds = CGDisplayBounds(CGMainDisplayID())
+    let quartzY = mainDisplayBounds.height - frame.origin.y - frame.height
+    let quartzFrame = CGRect(x: frame.origin.x, y: quartzY, width: frame.width, height: frame.height)
+
+    guard let cgImage = CGWindowListCreateImage(
+      quartzFrame,
+      .optionOnScreenBelowWindow,
+      kCGNullWindowID,
+      [.bestResolution]
+    ) else {
+      return nil
+    }
+
+    let nsImage = NSImage(cgImage: cgImage, size: frame.size)
+    guard let tiffData = nsImage.tiffRepresentation,
+          let bitmap = NSBitmapImageRep(data: tiffData),
+          let pngData = bitmap.representation(using: .png, properties: [:]) else {
+      return nil
+    }
+
+    return pngData
+  }
+
+  private func switchEffect(for areaID: UUID, to newEffect: EffectType, imageData: Data? = nil) {
     guard let areaIndex = areaManager.areas.firstIndex(where: { $0.id == areaID }) else {
       return
     }
-    
+
     var area = areaManager.areas[areaIndex]
-    
+
     let preservedFrame = area.frame
     let preservedName = area.name
     let preservedIsEnabled = area.isEnabled
     let preservedDisableOnHover = area.disableOnHover
-    
+
     switch newEffect {
     case .blur:
       area.effectType = .blur(radius: 20.0)
     case .darken:
       area.effectType = .darken(amount: 0.5)
     case .picture:
-      if let imagePath = imagePath {
-        area.effectType = .picture(imagePath: imagePath)
+      if let imageData = imageData {
+        area.effectType = .picture(imageData: imageData)
       } else {
         return
       }
     }
-    
+
     area.frame = preservedFrame
     area.name = preservedName
     area.isEnabled = preservedIsEnabled
     area.disableOnHover = preservedDisableOnHover
-    
+
     areaManager.update(area)
-    
+
     guard let window = OverlayWindowManager.shared.getWindow(for: areaID) else {
       return
     }
-    
+
     window.contentView?.subviews.forEach { $0.removeFromSuperview() }
-    
+
     let localBounds = CGRect(origin: .zero, size: area.frame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
     } else if newEffect.isPicture {
       return
     }
-    
+
+    window.orderFront(nil)
     setupMenu()
   }
   
