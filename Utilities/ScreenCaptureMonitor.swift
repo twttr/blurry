@@ -1,3 +1,4 @@
+#if DIRECT
 import Cocoa
 import Darwin
 
@@ -15,6 +16,7 @@ private let _CGSIsScreenWatcherPresent: CGSIsScreenWatcherPresentFunc? = {
 @MainActor
 class ScreenCaptureMonitor {
   static let shared = ScreenCaptureMonitor()
+  static var isAvailable: Bool { _CGSIsScreenWatcherPresent != nil }
   
   var onCaptureStateChanged: ((Bool) -> Void)?
   
@@ -29,7 +31,7 @@ class ScreenCaptureMonitor {
     guard _CGSIsScreenWatcherPresent != nil else { return }
     
     isMonitoring = true
-    lastCaptureState = checkScreenWatcher()
+    lastCaptureState = _CGSIsScreenWatcherPresent?() ?? false
     
     if lastCaptureState {
       onCaptureStateChanged?(true)
@@ -37,7 +39,6 @@ class ScreenCaptureMonitor {
     
     timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
       guard let self else { return }
-      
       Task { @MainActor [weak self] in
         self?.checkCaptureState()
       }
@@ -57,18 +58,15 @@ class ScreenCaptureMonitor {
   }
   
   var isScreenBeingCaptured: Bool {
-    return checkScreenWatcher()
-  }
-  
-  private func checkScreenWatcher() -> Bool {
-    return _CGSIsScreenWatcherPresent?() ?? false
+    _CGSIsScreenWatcherPresent?() ?? false
   }
   
   private func checkCaptureState() {
-    let currentState = checkScreenWatcher()
+    let currentState = _CGSIsScreenWatcherPresent?() ?? false
     if currentState != lastCaptureState {
       lastCaptureState = currentState
       onCaptureStateChanged?(currentState)
     }
   }
 }
+#endif

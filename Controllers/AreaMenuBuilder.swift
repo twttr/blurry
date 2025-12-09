@@ -15,8 +15,8 @@ import Cocoa
   
   func exportConfiguration()
   func importConfiguration()
-  func toggleAutoBlurOnScreenShare(_ sender: NSMenuItem)
-
+  @objc optional func toggleAutoBlurOnScreenShare(_ sender: NSMenuItem)
+  
   func adjustParameters(_ sender: NSMenuItem)
   
   func changeEffect(_ sender: NSMenuItem)
@@ -43,13 +43,13 @@ class AreaMenuBuilder {
     menu.addItem(addAreaMenuItem)
     
     menu.addItem(NSMenuItem.separator())
-
+    
     let anyEnabled = areaManager.areas.contains { $0.isEnabled }
     let toggleTitle = anyEnabled ? String(localized: "Disable All") : String(localized: "Enable All")
     let toggleItem = createMenuItem(title: toggleTitle, action: #selector(AreaMenuDelegate.toggleAllAreas), keyEquivalent: "b")
     toggleItem.keyEquivalentModifierMask = [.command, .shift]
     menu.addItem(toggleItem)
-
+    
     menu.addItem(NSMenuItem.separator())
     
     let configurationMenuItem = NSMenuItem(title: String(localized: "Configuration"), action: nil, keyEquivalent: "")
@@ -84,7 +84,8 @@ class AreaMenuBuilder {
   
   private func createConfigurationSubmenu() -> NSMenu {
     let submenu = NSMenu()
-
+    
+#if DIRECT
     let autoBlurItem = createMenuItem(
       title: String(localized: "Auto-blur on Screen Share"),
       action: #selector(AreaMenuDelegate.toggleAutoBlurOnScreenShare(_:))
@@ -93,7 +94,8 @@ class AreaMenuBuilder {
     submenu.addItem(autoBlurItem)
 
     submenu.addItem(NSMenuItem.separator())
-
+#endif
+    
     submenu.addItem(
       createMenuItem(
         title: String(localized: "Export"),
@@ -106,7 +108,7 @@ class AreaMenuBuilder {
         action: #selector(AreaMenuDelegate.importConfiguration)
       )
     )
-
+    
     return submenu
   }
   
@@ -156,7 +158,7 @@ class AreaMenuBuilder {
       action: #selector(AreaMenuDelegate.resizeArea(_:)),
       representedObject: area.id
     ))
-
+    
     submenu.addItem(createMenuItem(
       title: String(localized: "Remove"),
       action: #selector(AreaMenuDelegate.removeArea(_:)),
@@ -177,7 +179,7 @@ class AreaMenuBuilder {
                                           isSelected: radius == 20.0))
       submenu.addItem(createParameterItem(title: String(localized: "High"), areaID: area.id, level: "high",
                                           isSelected: radius == 30.0))
-
+      
     case .darken(let amount):
       submenu.addItem(createParameterItem(title: String(localized: "Low"), areaID: area.id, level: "low",
                                           isSelected: amount == 0.3))
@@ -185,7 +187,7 @@ class AreaMenuBuilder {
                                           isSelected: amount == 0.5))
       submenu.addItem(createParameterItem(title: String(localized: "High"), areaID: area.id, level: "high",
                                           isSelected: amount == 0.7))
-
+      
     case .picture:
       let noParamsItem = NSMenuItem(title: String(localized: "No adjustable parameters"), action: nil, keyEquivalent: "")
       noParamsItem.isEnabled = false
@@ -205,7 +207,7 @@ class AreaMenuBuilder {
     )
     blurItem.state = area.effectType.isBlur ? .on : .off
     submenu.addItem(blurItem)
-
+    
     let darkenItem = createMenuItem(
       title: String(localized: "Darken"),
       action: #selector(AreaMenuDelegate.changeEffect(_:)),
@@ -213,7 +215,7 @@ class AreaMenuBuilder {
     )
     darkenItem.state = area.effectType.isDarken ? .on : .off
     submenu.addItem(darkenItem)
-
+    
     let pictureItem = createMenuItem(
       title: String(localized: "Picture"),
       action: #selector(AreaMenuDelegate.changeEffect(_:)),

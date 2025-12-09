@@ -21,7 +21,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     HotkeyManager.shared.cleanup()
     DisplayManager.shared.cleanup()
     MouseTracker.shared.cleanup()
+#if DIRECT
     ScreenCaptureMonitor.shared.cleanup()
+#endif
   }
   
   func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
