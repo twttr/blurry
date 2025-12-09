@@ -146,9 +146,6 @@
     "Failed to read configuration file: %@" : {
 
     },
-    "Global Hotkey: ⌘⇧B" : {
-
-    },
     "High" : {
 
     },
@@ -201,9 +198,6 @@
 
     },
     "Picture" : {
-
-    },
-    "Preferences" : {
 
     },
     "Quit" : {

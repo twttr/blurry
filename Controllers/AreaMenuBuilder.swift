@@ -46,21 +46,15 @@ class AreaMenuBuilder {
 
     let anyEnabled = areaManager.areas.contains { $0.isEnabled }
     let toggleTitle = anyEnabled ? String(localized: "Disable All") : String(localized: "Enable All")
-    menu.addItem(createMenuItem(title: toggleTitle, action: #selector(AreaMenuDelegate.toggleAllAreas)))
+    let toggleItem = createMenuItem(title: toggleTitle, action: #selector(AreaMenuDelegate.toggleAllAreas), keyEquivalent: "b")
+    toggleItem.keyEquivalentModifierMask = [.command, .shift]
+    menu.addItem(toggleItem)
 
     menu.addItem(NSMenuItem.separator())
     
     let configurationMenuItem = NSMenuItem(title: String(localized: "Configuration"), action: nil, keyEquivalent: "")
     configurationMenuItem.submenu = createConfigurationSubmenu()
     menu.addItem(configurationMenuItem)
-    
-    let preferencesMenuItem = NSMenuItem(title: String(localized: "Preferences"), action: nil, keyEquivalent: "")
-    let preferencesSubmenu = NSMenu()
-    let hotkeyInfoItem = NSMenuItem(title: String(localized: "Global Hotkey: ⌘⇧B"), action: nil, keyEquivalent: "")
-    hotkeyInfoItem.isEnabled = false
-    preferencesSubmenu.addItem(hotkeyInfoItem)
-    preferencesMenuItem.submenu = preferencesSubmenu
-    menu.addItem(preferencesMenuItem)
     
     if !areaManager.areas.isEmpty {
       menu.addItem(NSMenuItem.separator())
