@@ -519,7 +519,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
       return
     }
     
-    window.orderFront(nil)
+    if area.isEnabled { window.orderFront(nil) }
     setupMenu()
   }
   
