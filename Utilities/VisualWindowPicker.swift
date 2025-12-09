@@ -1,10 +1,11 @@
 import Cocoa
 
 class VisualWindowPicker: NSObject {
-  private var overlayWindow: NSWindow?
+  private var overlayWindows: [NSWindow] = []
   private var highlightWindow: NSWindow?
-  private var trackingArea: NSTrackingArea?
   private var currentWindows: [WindowInfo] = []
+  private var keyMonitor = KeyMonitor()
+  private var currentCompletion: ((WindowInfo?) -> Void)?
   
   /// Interactively pick a window with visual feedback
   /// - Returns: The selected WindowInfo, or nil if cancelled
@@ -29,31 +30,40 @@ class VisualWindowPicker: NSObject {
   }
   
   private func showOverlay(completion: @escaping (WindowInfo?) -> Void) {
-    guard let screen = NSScreen.main else {
-      completion(nil)
-      return
+    currentCompletion = completion
+
+    keyMonitor.start(keyCode: 53) { [weak self] in
+      self?.handleCancel()
     }
-    
-    let window = NSWindow(
-      contentRect: screen.frame,
-      styleMask: .borderless,
-      backing: .buffered,
-      defer: false
-    )
-    window.backgroundColor = .clear
-    window.isOpaque = false
-    window.level = .screenSaver
-    window.ignoresMouseEvents = false
-    window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-    
-    let view = PickerOverlayView(frame: screen.frame, completion: completion)
-    view.picker = self
-    window.contentView = view
-    
-    overlayWindow = window
-    window.makeKeyAndOrderFront(nil)
-    
+
+    for screen in NSScreen.screens {
+      let window = PickerOverlayWindow(
+        contentRect: screen.frame,
+        styleMask: .borderless,
+        backing: .buffered,
+        defer: false
+      )
+      window.backgroundColor = .clear
+      window.isOpaque = false
+      window.level = .screenSaver
+      window.ignoresMouseEvents = false
+      window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+
+      let view = PickerOverlayView(frame: screen.frame, completion: completion)
+      view.picker = self
+      window.contentView = view
+
+      overlayWindows.append(window)
+      window.makeKeyAndOrderFront(nil)
+    }
+
     NSCursor.pointingHand.set()
+  }
+
+  private func handleCancel() {
+    let completion = currentCompletion
+    cleanup()
+    completion?(nil)
   }
   
   func handleMouseMove(at location: NSPoint) {
@@ -117,9 +127,13 @@ class VisualWindowPicker: NSObject {
   }
   
   private func cleanup() {
+    keyMonitor.stop()
     NSCursor.arrow.set()
-    overlayWindow?.orderOut(nil)
-    overlayWindow = nil
+    for window in overlayWindows {
+      window.orderOut(nil)
+    }
+    overlayWindows.removeAll()
+    currentCompletion = nil
     hideHighlight()
   }
   
@@ -158,30 +172,25 @@ class PickerOverlayView: NSView {
   }
   
   override func mouseMoved(with event: NSEvent) {
-    let location = event.locationInWindow
-    picker?.handleMouseMove(at: location)
+    guard let screenLocation = window?.convertPoint(toScreen: event.locationInWindow) else { return }
+    picker?.handleMouseMove(at: screenLocation)
   }
-  
+
   override func mouseDown(with event: NSEvent) {
-    let location = event.locationInWindow
+    guard let screenLocation = window?.convertPoint(toScreen: event.locationInWindow) else { return }
     if let completion = completion {
-      picker?.handleClick(at: location, completion: completion)
+      picker?.handleClick(at: screenLocation, completion: completion)
     }
   }
-  
+
   override func rightMouseDown(with event: NSEvent) {
     if let completion = completion {
       picker?.handleRightClick(completion: completion)
     }
   }
-  
-  override var acceptsFirstResponder: Bool { true }
-  
-  override func keyDown(with event: NSEvent) {
-    if event.keyCode == 53 {
-      if let completion = completion {
-        picker?.handleRightClick(completion: completion)
-      }
-    }
-  }
+}
+
+private class PickerOverlayWindow: NSWindow {
+  override var canBecomeKey: Bool { true }
+  override var canBecomeMain: Bool { true }
 }

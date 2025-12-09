@@ -357,7 +357,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   
   // MARK: - Enable/Disable All Areas
   
-  @objc func enableAllAreas() {
+  private func enableAllAreas() {
     for area in areaManager.areas {
       if !area.isEnabled {
         areaManager.toggleEnabled(for: area.id)
@@ -372,7 +372,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     }
   }
   
-  @objc func disableAllAreas() {
+  private func disableAllAreas() {
     for area in areaManager.areas {
       if area.isEnabled {
         if area.disableOnHover {
@@ -387,7 +387,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     }
   }
   
-  private func toggleAllAreas() {
+  @objc func toggleAllAreas() {
     let anyEnabled = areaManager.areas.contains { $0.isEnabled }
     if anyEnabled {
       disableAllAreas()

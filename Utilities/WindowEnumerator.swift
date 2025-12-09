@@ -21,11 +21,9 @@ enum WindowEnumerator {
     
     var windows: [WindowInfo] = []
     
-    guard let mainScreen = NSScreen.main else {
-      return []
-    }
-    let screenHeight = mainScreen.frame.height
-    let screenWidth = mainScreen.frame.width
+    let primaryDisplayBounds = CGDisplayBounds(CGMainDisplayID())
+    let screenHeight = primaryDisplayBounds.height
+    let screenWidth = primaryDisplayBounds.width
     
     for windowDict in windowList {
       guard let boundsDict = windowDict[kCGWindowBounds as String] as? [String: Any],

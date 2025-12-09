@@ -4,6 +4,8 @@ import Cocoa
 class AreaSelectionController {
   private var overlayWindows: [NSWindow] = []
   private var overlayViews: [OverlayView] = []
+  private var keyMonitor = KeyMonitor()
+  private var currentOnCancel: (() -> Void)?
   
   /// Begins interactive area selection with async/await
   /// - Returns: A tuple containing the selected rect and user-provided name, or nil if cancelled
@@ -35,6 +37,11 @@ class AreaSelectionController {
     onComplete: @escaping (CGRect, String) -> Void,
     onCancel: @escaping () -> Void
   ) {
+    currentOnCancel = onCancel
+    keyMonitor.start(keyCode: 53) { [weak self] in
+      self?.handleEscPressed()
+    }
+
     for screen in NSScreen.screens {
       let window = SelectionOverlayWindow(
         contentRect: screen.frame,
@@ -70,14 +77,22 @@ class AreaSelectionController {
   }
   
   func closeOverlay() {
+    keyMonitor.stop()
     NSCursor.arrow.set()
-    
+
     for window in overlayWindows {
       window.orderOut(nil)
     }
-    
+
     overlayWindows.removeAll()
     overlayViews.removeAll()
+    currentOnCancel = nil
+  }
+
+  private func handleEscPressed() {
+    if let onCancel = currentOnCancel {
+      handleCancel(onCancel)
+    }
   }
   
   func handleSelection(_ rect: CGRect, isReselection: Bool, onComplete: @escaping (CGRect, String) -> Void) {
@@ -154,17 +169,7 @@ private class OverlayView: NSView {
   override func resetCursorRects() {
     addCursorRect(bounds, cursor: .crosshair)
   }
-  
-  override func keyDown(with event: NSEvent) {
-    if event.keyCode == 53 {
-      if let onCancel = onCancel {
-        controller?.handleCancel(onCancel)
-      }
-    } else {
-      super.keyDown(with: event)
-    }
-  }
-  
+
   override func mouseDown(with event: NSEvent) {
     startPoint = convert(event.locationInWindow, from: nil)
     currentPoint = startPoint

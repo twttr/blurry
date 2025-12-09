@@ -12,8 +12,7 @@ import Cocoa
   func resizeArea(_ sender: NSMenuItem)
   func removeArea(_ sender: NSMenuItem)
   
-  func enableAllAreas()
-  func disableAllAreas()
+  func toggleAllAreas()
   
   func exportConfiguration()
   func importConfiguration()
@@ -44,10 +43,11 @@ class AreaMenuBuilder {
     menu.addItem(addAreaMenuItem)
     
     menu.addItem(NSMenuItem.separator())
-    
-    menu.addItem(createMenuItem(title: String(localized: "Enable All"), action: #selector(AreaMenuDelegate.enableAllAreas)))
-    menu.addItem(createMenuItem(title: String(localized: "Disable All"), action: #selector(AreaMenuDelegate.disableAllAreas)))
-    
+
+    let anyEnabled = areaManager.areas.contains { $0.isEnabled }
+    let toggleTitle = anyEnabled ? String(localized: "Disable All") : String(localized: "Enable All")
+    menu.addItem(createMenuItem(title: toggleTitle, action: #selector(AreaMenuDelegate.toggleAllAreas)))
+
     menu.addItem(NSMenuItem.separator())
     
     let configurationMenuItem = NSMenuItem(title: String(localized: "Configuration"), action: nil, keyEquivalent: "")
