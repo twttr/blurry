@@ -38,6 +38,7 @@
 		05D0EC852EE2D048007CBB41 /* Exceptions for "Utilities" folder in "Blurry" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AppLogger.swift,
 				DisplayManager.swift,
 				HotkeyManager.swift,
 				KeyMonitor.swift,

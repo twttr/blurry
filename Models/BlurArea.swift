@@ -10,10 +10,11 @@ struct BlurArea: Identifiable, Codable {
   var isEnabled: Bool = true
   var disableOnHover: Bool = false
   var displayID: CGDirectDisplayID? = nil
+  var displayUUID: String? = nil
   var displayRelativeFrame: CGRect = .zero
   
   enum CodingKeys: String, CodingKey {
-    case id, name, frame, effectType, isEnabled, disableOnHover, displayID, displayRelativeFrame
+    case id, name, frame, effectType, isEnabled, disableOnHover, displayID, displayUUID, displayRelativeFrame
   }
   
   init(
@@ -24,6 +25,7 @@ struct BlurArea: Identifiable, Codable {
     isEnabled: Bool = true,
     disableOnHover: Bool = false,
     displayID: CGDirectDisplayID? = nil,
+    displayUUID: String? = nil,
     displayRelativeFrame: CGRect = .zero
   ) {
     self.id = id
@@ -33,6 +35,7 @@ struct BlurArea: Identifiable, Codable {
     self.isEnabled = isEnabled
     self.disableOnHover = disableOnHover
     self.displayID = displayID
+    self.displayUUID = displayUUID
     self.displayRelativeFrame = displayRelativeFrame
   }
   
@@ -48,6 +51,7 @@ struct BlurArea: Identifiable, Codable {
     try container.encode(isEnabled, forKey: .isEnabled)
     try container.encode(disableOnHover, forKey: .disableOnHover)
     try container.encode(displayID, forKey: .displayID)
+    try container.encodeIfPresent(displayUUID, forKey: .displayUUID)
     
     let codableRelativeFrame = CodableRect(from: displayRelativeFrame)
     try container.encode(codableRelativeFrame, forKey: .displayRelativeFrame)
@@ -76,6 +80,7 @@ struct BlurArea: Identifiable, Codable {
     isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
     disableOnHover = try container.decode(Bool.self, forKey: .disableOnHover)
     displayID = try container.decodeIfPresent(CGDirectDisplayID.self, forKey: .displayID)
+    displayUUID = try container.decodeIfPresent(String.self, forKey: .displayUUID)
     
     if let codableRelativeFrame = try? container.decode(CodableRect.self, forKey: .displayRelativeFrame) {
       displayRelativeFrame = codableRelativeFrame.cgRect

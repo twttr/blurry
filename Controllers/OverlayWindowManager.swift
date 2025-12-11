@@ -11,21 +11,28 @@ class OverlayWindowManager {
   private init() {}
   
   func createWindow(for area: BlurArea) -> OverlayWindow? {
+    let logger = AppLogger.shared
+    
     guard area.frame.width > 0 && area.frame.height > 0 else {
+      logger.error("Cannot create window: invalid frame size (width: \(area.frame.width), height: \(area.frame.height)) for area: \(area.name)")
       return nil
     }
     
     if let displayID = area.displayID {
       guard DisplayManager.shared.isFrameValid(area.frame, for: displayID) else {
+        logger.error("Cannot create window: frame validation failed for display \(displayID), area: \(area.name)")
+        logger.debug("Frame: \(area.frame), Display: \(displayID)")
         return nil
       }
+    } else {
+      logger.warning("Creating window without display ID for area: \(area.name)")
     }
     
     let window = OverlayWindow(frame: area.frame, cornerRadius: defaultCornerRadius)
     
     windows[area.id] = window
-    window.orderFront(nil)
     
+    logger.info("Created overlay window for area: \(area.name)")
     return window
   }
   

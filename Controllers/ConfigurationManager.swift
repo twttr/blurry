@@ -179,6 +179,7 @@ class ConfigurationManager {
     
     if let effectView = EffectViewFactory.createView(for: area, in: window.contentView?.bounds ?? .zero) {
       window.contentView?.addSubview(effectView)
+      window.orderFront(nil)
     }
   }
 }

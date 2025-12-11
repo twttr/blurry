@@ -236,9 +236,12 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     )
     area.displayID = displayID
     
-    if let displayID = displayID,
-       let screen = DisplayManager.shared.getScreen(for: displayID) {
-      area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
+    if let displayID = displayID {
+      area.displayUUID = DisplayManager.shared.getDisplayUUID(for: displayID)
+      
+      if let screen = DisplayManager.shared.getScreen(for: displayID) {
+        area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
+      }
     }
     
     areaManager.add(area)
@@ -248,6 +251,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     let localBounds = CGRect(origin: .zero, size: area.frame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
+      window.orderFront(nil)
     }
   }
   
@@ -261,9 +265,12 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     )
     area.displayID = displayID
     
-    if let displayID = displayID,
-       let screen = DisplayManager.shared.getScreen(for: displayID) {
-      area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
+    if let displayID = displayID {
+      area.displayUUID = DisplayManager.shared.getDisplayUUID(for: displayID)
+      
+      if let screen = DisplayManager.shared.getScreen(for: displayID) {
+        area.displayRelativeFrame = area.makeDisplayRelative(screen: screen)
+      }
     }
     
     areaManager.add(area)
@@ -273,6 +280,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
     let localBounds = CGRect(origin: .zero, size: area.frame.size)
     if let effectView = EffectViewFactory.createView(for: area, in: localBounds) {
       window.contentView?.addSubview(effectView)
+      window.orderFront(nil)
     }
     
   }

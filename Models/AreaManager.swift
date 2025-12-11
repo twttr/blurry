@@ -6,9 +6,19 @@ class AreaManager: ObservableObject {
   static let shared = AreaManager()
   
   @Published var areas: [BlurArea] = []
+  private var batchMode = false
   
   private init() {
     load()
+  }
+  
+  func beginBatchUpdate() {
+    batchMode = true
+  }
+  
+  func endBatchUpdate() {
+    batchMode = false
+    save()
   }
   
   func add(_ area: BlurArea) {
@@ -46,22 +56,29 @@ class AreaManager: ObservableObject {
   }
   
   private func save() {
+    guard !batchMode else { return }
+    
     do {
       let encoded = try JSONEncoder().encode(areas)
       UserDefaults.standard.set(encoded, forKey: "SavedAreas")
     } catch {
+      AppLogger.shared.error("Failed to save areas: \(error.localizedDescription)")
     }
   }
   
   private func load() {
+    let logger = AppLogger.shared
     guard let savedData = UserDefaults.standard.data(forKey: "SavedAreas") else {
+      logger.info("No saved areas found in UserDefaults")
       areas = []
       return
     }
     
     do {
       areas = try JSONDecoder().decode([BlurArea].self, from: savedData)
+      logger.info("Loaded \(areas.count) areas from UserDefaults")
     } catch {
+      logger.error("Failed to load areas: \(error.localizedDescription)")
       areas = []
     }
   }
