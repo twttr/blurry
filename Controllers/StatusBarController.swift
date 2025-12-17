@@ -64,7 +64,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   
 #if DIRECT
   private func setupScreenCaptureMonitoring() {
-    guard UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare") else { return }
+    guard NSUbiquitousKeyValueStore.default.bool(forKey: "AutoBlurOnScreenShare") else { return }
     
     ScreenCaptureMonitor.shared.onCaptureStateChanged = { [weak self] isCapturing in
       if isCapturing {
@@ -106,7 +106,7 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   
 #if DIRECT
   func updateScreenCaptureMonitoring() {
-    if UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare") {
+    if NSUbiquitousKeyValueStore.default.bool(forKey: "AutoBlurOnScreenShare") {
       ScreenCaptureMonitor.shared.onCaptureStateChanged = { [weak self] isCapturing in
         if isCapturing {
           self?.handleScreenShareStarted()
@@ -556,8 +556,10 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   
 #if DIRECT
   @objc func toggleAutoBlurOnScreenShare(_ sender: NSMenuItem) {
-    let currentValue = UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare")
-    UserDefaults.standard.set(!currentValue, forKey: "AutoBlurOnScreenShare")
+    let store = NSUbiquitousKeyValueStore.default
+    let currentValue = store.bool(forKey: "AutoBlurOnScreenShare")
+    store.set(!currentValue, forKey: "AutoBlurOnScreenShare")
+    store.synchronize()
     updateScreenCaptureMonitoring()
     setupMenu()
   }

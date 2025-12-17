@@ -90,7 +90,7 @@ class AreaMenuBuilder {
       title: String(localized: "Auto-blur on Screen Share"),
       action: #selector(AreaMenuDelegate.toggleAutoBlurOnScreenShare(_:))
     )
-    autoBlurItem.state = UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare") ? .on : .off
+    autoBlurItem.state = NSUbiquitousKeyValueStore.default.bool(forKey: "AutoBlurOnScreenShare") ? .on : .off
     submenu.addItem(autoBlurItem)
 
     submenu.addItem(NSMenuItem.separator())

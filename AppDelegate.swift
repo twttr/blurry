@@ -1,19 +1,24 @@
 import Cocoa
+import CloudKit
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusBarController: StatusBarController!
   private let areaManager = AreaManager.shared
   private var restorationRetryCount = 0
   private let maxRetryAttempts = 2
-  
+
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApplication.shared.setActivationPolicy(.accessory)
-    
+
     Task { @MainActor in
       await NotificationManager.shared.requestPermissions()
-      
+
+      areaManager.setSkipCloudSync(true)
+      await SyncCoordinator.shared.initialize()
+      areaManager.setSkipCloudSync(false)
+
       try? await Task.sleep(nanoseconds: 100_000_000)
-      
+
       await restoreBlurAreas()
       
       if shouldRetryRestoration() && restorationRetryCount < maxRetryAttempts {
@@ -40,6 +45,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   
   func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
     return true
+  }
+
+  func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
+    guard let notification = CKNotification(fromRemoteNotificationDictionary: userInfo) else { return }
+    if notification.notificationType == .query {
+      Task {
+        await SyncCoordinator.shared.fetchRemoteChanges()
+      }
+    }
   }
   
   private func setupDisplayMonitoring() {
