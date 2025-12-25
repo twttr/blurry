@@ -1,6 +1,7 @@
 import Cocoa
 
 /// Manages effect parameter adjustments and re-rendering
+@MainActor
 class EffectParameterManager {
   private let areaManager: AreaManager
   

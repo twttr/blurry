@@ -25,6 +25,7 @@ import Cocoa
 }
 
 /// Builds and manages menu structure for the status bar
+@MainActor
 class AreaMenuBuilder {
   weak var delegate: AreaMenuDelegate?
   private let areaManager: AreaManager
