@@ -2,6 +2,7 @@ import Foundation
 import CoreGraphics
 @testable import Blurry
 
+@MainActor
 enum TestHelpers {
   static func makeBlurArea(
     id: UUID = UUID(),

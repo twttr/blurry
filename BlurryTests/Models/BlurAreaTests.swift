@@ -1,6 +1,7 @@
 import XCTest
 @testable import Blurry
 
+@MainActor
 final class BlurAreaTests: XCTestCase {
 
   func testInitialization() {

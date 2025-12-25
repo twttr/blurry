@@ -1,6 +1,7 @@
 import XCTest
 @testable import Blurry
 
+@MainActor
 final class EffectTypeTests: XCTestCase {
 
   func testBlurEncodeDecodeRoundTrip() throws {
