@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/twttr/blurry/actions/workflows/ci.yml"><img src="https://github.com/twttr/blurry/actions/workflows/ci.yml/badge.svg?branch=develop" alt="CI"></a>
   <img src="https://img.shields.io/badge/platform-macOS%2012%2B-blue" alt="Platform">
   <img src="https://img.shields.io/badge/swift-5.9-orange" alt="Swift">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">

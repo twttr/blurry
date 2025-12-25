@@ -8,6 +8,7 @@ protocol UserDefaultsProtocol {
 
 extension UserDefaults: UserDefaultsProtocol {}
 
+@MainActor
 protocol AreaManaging: AnyObject {
   var areas: [BlurArea] { get }
   var areasPublisher: Published<[BlurArea]>.Publisher { get }
