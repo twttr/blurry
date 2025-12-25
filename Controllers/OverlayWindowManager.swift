@@ -1,25 +1,44 @@
 import Cocoa
 
+protocol OverlayWindowManaging: AnyObject {
+  func createWindow(for area: BlurArea) -> OverlayWindow?
+  func updateWindow(for area: BlurArea)
+  func removeWindow(for areaID: UUID)
+  func removeAllWindows()
+  func getWindow(for areaID: UUID) -> OverlayWindow?
+  func enableResizeMode(for areaID: UUID, delegate: any ResizeHandleDelegate)
+  func disableResizeMode(for areaID: UUID)
+  func isInResizeMode(areaID: UUID) -> Bool
+  func disableAllResizeModes()
+}
+
 @MainActor
-class OverlayWindowManager {
+class OverlayWindowManager: OverlayWindowManaging {
   static let shared = OverlayWindowManager()
-  
+
   private var windows: [UUID: OverlayWindow] = [:]
   private let defaultCornerRadius: Double = 20.0
   private var areasInResizeMode: Set<UUID> = []
-  
-  private init() {}
+  private let displayManager: DisplayManaging
+
+  convenience init() {
+    self.init(displayManager: DisplayManager.shared)
+  }
+
+  init(displayManager: DisplayManaging) {
+    self.displayManager = displayManager
+  }
   
   func createWindow(for area: BlurArea) -> OverlayWindow? {
     let logger = AppLogger.shared
-    
+
     guard area.frame.width > 0 && area.frame.height > 0 else {
       logger.error("Cannot create window: invalid frame size (width: \(area.frame.width), height: \(area.frame.height)) for area: \(area.name)")
       return nil
     }
-    
+
     if let displayID = area.displayID {
-      guard DisplayManager.shared.isFrameValid(area.frame, for: displayID) else {
+      guard displayManager.isFrameValid(area.frame, for: displayID) else {
         logger.error("Cannot create window: frame validation failed for display \(displayID), area: \(area.name)")
         logger.debug("Frame: \(area.frame), Display: \(displayID)")
         return nil

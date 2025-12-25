@@ -1,39 +1,71 @@
 import Cocoa
 
+protocol DisplayManaging: AnyObject {
+  var onScreenConfigurationChanged: (() -> Void)? { get set }
+  func startMonitoring()
+  func stopMonitoring()
+  func cleanup()
+  func getCurrentDisplayID(for point: CGPoint) -> CGDirectDisplayID?
+  func isDisplayAvailable(_ displayID: CGDirectDisplayID) -> Bool
+  func getScreen(for displayID: CGDirectDisplayID) -> NSScreen?
+  func getAvailableDisplayIDs() -> [CGDirectDisplayID]
+  func getDisplayUUID(for displayID: CGDirectDisplayID) -> String?
+  func getDisplayID(for uuid: String) -> CGDirectDisplayID?
+  func getScreen(for uuid: String) -> NSScreen?
+  func isFrameValid(_ frame: CGRect, for displayID: CGDirectDisplayID) -> Bool
+}
+
+protocol ScreenProvider {
+  var screens: [NSScreen] { get }
+}
+
+class NSScreenProvider: ScreenProvider {
+  var screens: [NSScreen] { NSScreen.screens }
+}
+
 @MainActor
-class DisplayManager {
+class DisplayManager: DisplayManaging {
   static let shared = DisplayManager()
-  
+
   var onScreenConfigurationChanged: (() -> Void)?
-  
+
   private var isMonitoring = false
-  
-  private init() {}
+  private let notificationCenter: NotificationCenter
+  private let screenProvider: ScreenProvider
+
+  convenience init() {
+    self.init(notificationCenter: .default, screenProvider: NSScreenProvider())
+  }
+
+  init(notificationCenter: NotificationCenter, screenProvider: ScreenProvider) {
+    self.notificationCenter = notificationCenter
+    self.screenProvider = screenProvider
+  }
   
   // MARK: - Monitoring
   
   func startMonitoring() {
     guard !isMonitoring else { return }
-    
-    NotificationCenter.default.addObserver(
+
+    notificationCenter.addObserver(
       self,
       selector: #selector(screenConfigurationDidChange(_:)),
       name: NSApplication.didChangeScreenParametersNotification,
       object: nil
     )
-    
+
     isMonitoring = true
   }
-  
+
   func stopMonitoring() {
     guard isMonitoring else { return }
-    
-    NotificationCenter.default.removeObserver(
+
+    notificationCenter.removeObserver(
       self,
       name: NSApplication.didChangeScreenParametersNotification,
       object: nil
     )
-    
+
     isMonitoring = false
   }
   
@@ -77,19 +109,19 @@ class DisplayManager {
   }
   
   func getScreen(for displayID: CGDirectDisplayID) -> NSScreen? {
-    let screens = NSScreen.screens
-    
+    let screens = screenProvider.screens
+
     let screen = screens.first { screen in
       guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID else {
         return false
       }
       return screenNumber == displayID
     }
-    
+
     if screen == nil {
       AppLogger.shared.warning("Could not find NSScreen for display ID \(displayID)")
     }
-    
+
     return screen
   }
   

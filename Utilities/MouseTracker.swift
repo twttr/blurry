@@ -1,20 +1,53 @@
 import Cocoa
 
+protocol MouseTracking: AnyObject {
+  var onMouseEnter: ((UUID) -> Void)? { get set }
+  var onMouseExit: ((UUID) -> Void)? { get set }
+  func startTracking(area: BlurArea)
+  func stopTracking(areaID: UUID)
+  func stopAllTracking()
+  func cleanup()
+  func updateFrame(for areaID: UUID, frame: CGRect)
+  func isTracking(areaID: UUID) -> Bool
+}
+
+protocol MouseEventMonitorProvider {
+  func addGlobalMonitor(for mask: NSEvent.EventTypeMask, handler: @escaping (NSEvent) -> Void) -> Any?
+  func removeMonitor(_ monitor: Any)
+  var mouseLocation: NSPoint { get }
+}
+
+class DefaultMouseEventMonitorProvider: MouseEventMonitorProvider {
+  func addGlobalMonitor(for mask: NSEvent.EventTypeMask, handler: @escaping (NSEvent) -> Void) -> Any? {
+    NSEvent.addGlobalMonitorForEvents(matching: mask, handler: handler)
+  }
+
+  func removeMonitor(_ monitor: Any) {
+    NSEvent.removeMonitor(monitor)
+  }
+
+  var mouseLocation: NSPoint { NSEvent.mouseLocation }
+}
+
 @MainActor
-class MouseTracker {
+class MouseTracker: MouseTracking {
   static let shared = MouseTracker()
-  
+
   private var eventMonitor: Any?
   private var activeAreas: [UUID: CGRect] = [:]
   private var currentlyHoveredAreas: Set<UUID> = []
-  
-  /// Called when the mouse enters a tracked area
+  private let eventMonitorProvider: MouseEventMonitorProvider
+
   var onMouseEnter: ((UUID) -> Void)?
-  
-  /// Called when the mouse exits a tracked area
   var onMouseExit: ((UUID) -> Void)?
-  
-  private init() {}
+
+  convenience init() {
+    self.init(eventMonitorProvider: DefaultMouseEventMonitorProvider())
+  }
+
+  init(eventMonitorProvider: MouseEventMonitorProvider) {
+    self.eventMonitorProvider = eventMonitorProvider
+  }
   
   /// Starts tracking mouse movement for a disable area.
   /// Only adds the area if disableOnHover is enabled.
@@ -77,15 +110,18 @@ class MouseTracker {
   
   private func startMonitoring() {
     guard eventMonitor == nil else { return }
-    
-    eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] event in
-      self?.handleMouseMoved(to: NSEvent.mouseLocation)
+
+    eventMonitor = eventMonitorProvider.addGlobalMonitor(for: .mouseMoved) { [weak self] _ in
+      guard let self else { return }
+      Task { @MainActor in
+        self.handleMouseMoved(to: self.eventMonitorProvider.mouseLocation)
+      }
     }
   }
-  
+
   private func stopMonitoring() {
     if let monitor = eventMonitor {
-      NSEvent.removeMonitor(monitor)
+      eventMonitorProvider.removeMonitor(monitor)
       eventMonitor = nil
     }
   }

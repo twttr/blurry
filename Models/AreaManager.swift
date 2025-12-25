@@ -1,14 +1,44 @@
 import Foundation
 import Combine
 
+protocol UserDefaultsProtocol {
+  func data(forKey defaultName: String) -> Data?
+  func set(_ value: Any?, forKey defaultName: String)
+}
+
+extension UserDefaults: UserDefaultsProtocol {}
+
+protocol AreaManaging: AnyObject {
+  var areas: [BlurArea] { get }
+  var areasPublisher: Published<[BlurArea]>.Publisher { get }
+  func add(_ area: BlurArea)
+  func remove(withID id: UUID)
+  func update(_ area: BlurArea)
+  func toggleEnabled(for id: UUID)
+  func removeAll()
+  func replaceAll(with newAreas: [BlurArea])
+  func beginBatchUpdate()
+  func endBatchUpdate()
+}
+
 @MainActor
-class AreaManager: ObservableObject {
+class AreaManager: ObservableObject, AreaManaging {
   static let shared = AreaManager()
-  
+
   @Published var areas: [BlurArea] = []
+  var areasPublisher: Published<[BlurArea]>.Publisher { $areas }
+
   private var batchMode = false
-  
-  private init() {
+  private let userDefaults: UserDefaultsProtocol
+  private let storageKey: String
+
+  convenience init() {
+    self.init(userDefaults: UserDefaults.standard)
+  }
+
+  init(userDefaults: UserDefaultsProtocol, storageKey: String = "SavedAreas") {
+    self.userDefaults = userDefaults
+    self.storageKey = storageKey
     load()
   }
   
@@ -57,23 +87,23 @@ class AreaManager: ObservableObject {
   
   private func save() {
     guard !batchMode else { return }
-    
+
     do {
       let encoded = try JSONEncoder().encode(areas)
-      UserDefaults.standard.set(encoded, forKey: "SavedAreas")
+      userDefaults.set(encoded, forKey: storageKey)
     } catch {
       AppLogger.shared.error("Failed to save areas: \(error.localizedDescription)")
     }
   }
-  
+
   private func load() {
     let logger = AppLogger.shared
-    guard let savedData = UserDefaults.standard.data(forKey: "SavedAreas") else {
+    guard let savedData = userDefaults.data(forKey: storageKey) else {
       logger.info("No saved areas found in UserDefaults")
       areas = []
       return
     }
-    
+
     do {
       areas = try JSONDecoder().decode([BlurArea].self, from: savedData)
       logger.info("Loaded \(areas.count) areas from UserDefaults")
