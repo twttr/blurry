@@ -5,22 +5,23 @@ import Cocoa
   func addBlurArea()
   func addDarkenArea()
   func addAreaFromWindow()
-  
+
   func toggleAreaEnabled(_ sender: NSMenuItem)
   func toggleDisable(_ sender: NSMenuItem)
   func resizeArea(_ sender: NSMenuItem)
   func removeArea(_ sender: NSMenuItem)
-  
+
   func toggleAllAreas()
-  
+
   func exportConfiguration()
   func importConfiguration()
   @objc optional func toggleAutoBlurOnScreenShare(_ sender: NSMenuItem)
-  
+  @objc optional func checkForUpdates()
+
   func adjustParameters(_ sender: NSMenuItem)
-  
+
   func changeEffect(_ sender: NSMenuItem)
-  
+
   func quit()
 }
 
@@ -85,7 +86,7 @@ class AreaMenuBuilder {
   
   private func createConfigurationSubmenu() -> NSMenu {
     let submenu = NSMenu()
-    
+
 #if DIRECT
     let autoBlurItem = createMenuItem(
       title: String(localized: "Auto-blur on Screen Share"),
@@ -93,10 +94,19 @@ class AreaMenuBuilder {
     )
     autoBlurItem.state = UserDefaults.standard.bool(forKey: "AutoBlurOnScreenShare") ? .on : .off
     submenu.addItem(autoBlurItem)
-
     submenu.addItem(NSMenuItem.separator())
 #endif
-    
+
+#if ENABLE_SPARKLE
+    submenu.addItem(
+      createMenuItem(
+        title: String(localized: "Check for Updates..."),
+        action: #selector(AreaMenuDelegate.checkForUpdates)
+      )
+    )
+    submenu.addItem(NSMenuItem.separator())
+#endif
+
     submenu.addItem(
       createMenuItem(
         title: String(localized: "Export"),
@@ -109,7 +119,7 @@ class AreaMenuBuilder {
         action: #selector(AreaMenuDelegate.importConfiguration)
       )
     )
-    
+
     return submenu
   }
   

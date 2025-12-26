@@ -2,7 +2,7 @@ import Cocoa
 import Combine
 
 @MainActor
-class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, ResizeHandleDelegate {
+class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDelegate, ResizeHandleDelegate, NSMenuDelegate {
   private var statusItem: NSStatusItem!
   private var cancellables = Set<AnyCancellable>()
   private var currentSelectionController: AreaSelectionController?
@@ -12,32 +12,47 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   private var parameterManager: EffectParameterManager!
   private var configurationManager: ConfigurationManager!
   private var preScreenShareEnabledStates: [UUID: Bool]?
-  
+#if ENABLE_SPARKLE
+  private var sparkleUpdater: SparkleUpdater?
+
+  init(areaManager: AreaManager, sparkleUpdater: SparkleUpdater?) {
+    self.areaManager = areaManager
+    self.sparkleUpdater = sparkleUpdater
+    super.init()
+    commonInit()
+  }
+#endif
+
   init(areaManager: AreaManager) {
     self.areaManager = areaManager
+    super.init()
+    commonInit()
+  }
+
+  private func commonInit() {
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     statusItem.isVisible = true
-    
+
     if let button = statusItem.button {
       if let image = NSImage(systemSymbolName: "eye.trianglebadge.exclamationmark", accessibilityDescription: String(localized: "Blurry")) {
         image.isTemplate = true
         button.image = image
       } else {
-        button.title = "⚫️ Blurry"
+        button.title = "Blurry"
       }
     }
-    
+
     menuBuilder = AreaMenuBuilder(areaManager: areaManager, delegate: self)
     parameterManager = EffectParameterManager(areaManager: areaManager)
     configurationManager = ConfigurationManager(areaManager: areaManager, delegate: self)
     setupMenu()
     observeAreaChanges()
     setupMouseTrackingCallbacks()
-    
+
     HotkeyManager.shared.onHotkeyPressed = { [weak self] in
       self?.toggleAllAreas()
     }
-    
+
     initializeDisableTracking()
 #if DIRECT
     setupScreenCaptureMonitoring()
@@ -157,8 +172,22 @@ class StatusBarController: AreaMenuDelegate, ConfigurationManagerDelegate, Resiz
   }
   
   private func setupMenu() {
-    statusItem.menu = menuBuilder.buildMainMenu()
+    let menu = menuBuilder.buildMainMenu()
+    menu.delegate = self
+    statusItem.menu = menu
   }
+
+  func menuWillOpen(_ menu: NSMenu) {
+#if ENABLE_SPARKLE
+    sparkleUpdater?.checkForUpdatesInBackground()
+#endif
+  }
+
+#if ENABLE_SPARKLE
+  @objc func checkForUpdates() {
+    sparkleUpdater?.checkForUpdates()
+  }
+#endif
   
   // MARK: - AreaMenuDelegate Implementation
   

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		05C6614A2EFEA942005053B6 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 05C661492EFEA942005053B6 /* Sparkle */; };
 		05D0EC022EE1FFDB007CBB41 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 05D0EBFE2EE1FFDB007CBB41 /* Assets.xcassets */; };
 		05D0EC142EE1FFDB007CBB41 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D0EBFD2EE1FFDB007CBB41 /* AppDelegate.swift */; };
 		05D0EC152EE1FFDB007CBB41 /* BlurryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D0EC002EE1FFDB007CBB41 /* BlurryApp.swift */; };
@@ -56,6 +57,7 @@
 				MouseTracker.swift,
 				NotificationManager.swift,
 				ScreenCaptureMonitor.swift,
+				SparkleUpdater.swift,
 				VisualWindowPicker.swift,
 				WindowEnumerator.swift,
 				WindowPicker.swift,
@@ -117,6 +119,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				05C6614A2EFEA942005053B6 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -176,6 +179,7 @@
 			);
 			name = Blurry;
 			packageProductDependencies = (
+				05C661492EFEA942005053B6 /* Sparkle */,
 			);
 			productName = Blurry;
 			productReference = 055FD6602EE1ED5D00BC9CBC /* Blurry.app */;
@@ -231,6 +235,9 @@
 			);
 			mainGroup = 055FD6572EE1ED5D00BC9CBC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				05C661482EFEA942005053B6 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 055FD6612EE1ED5D00BC9CBC /* Products */;
 			projectDirPath = "";
@@ -428,6 +435,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited) ENABLE_SPARKLE";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -460,6 +468,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = ENABLE_SPARKLE;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -535,6 +544,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		05C661482EFEA942005053B6 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		05C661492EFEA942005053B6 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05C661482EFEA942005053B6 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 055FD6582EE1ED5D00BC9CBC /* Project object */;
 }

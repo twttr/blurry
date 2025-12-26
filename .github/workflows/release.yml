@@ -18,7 +18,8 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) ENABLE_SPARKLE'
 
       - name: Create DMG
         run: |
@@ -28,14 +29,51 @@ jobs:
           hdiutil create -volname "Blurry" -srcfolder dmg-contents \
             -ov -format UDZO "Blurry-${{ github.ref_name }}.dmg"
 
+      - name: Create ZIP for Sparkle
+        run: |
+          cd "build/Build/Products/Release"
+          zip -r -y "../../../../Blurry-${{ github.ref_name }}.zip" Blurry.app
+          cd -
+
+      - name: Download Sparkle
+        run: |
+          curl -L -o sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz
+          mkdir -p /tmp/Sparkle
+          tar -xf sparkle.tar.xz -C /tmp/Sparkle
+
+      - name: Sign and Generate Appcast
+        env:
+          SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/Blurry-${{ github.ref_name }}.zip"
+          OUTPUT_DIR="${{ github.workspace }}" ./scripts/generate-appcast.sh \
+            "Blurry-${{ github.ref_name }}.zip" \
+            "$VERSION" \
+            "$DOWNLOAD_URL"
+
+      - name: Deploy Appcast to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
+          keep_files: true
+          include_files: appcast.xml
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Blurry-${{ github.ref_name }}
-          path: '*.dmg'
+          path: |
+            *.dmg
+            *.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: '*.dmg'
+          files: |
+            *.dmg
+            *.zip
           generate_release_notes: true
