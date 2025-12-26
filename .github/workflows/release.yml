@@ -16,13 +16,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           xcodebuild -scheme Blurry -configuration Release \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) ENABLE_SPARKLE'
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) ENABLE_SPARKLE' \
+            SENTRY_DSN="$SENTRY_DSN"
 
       - name: Create DMG
         run: |

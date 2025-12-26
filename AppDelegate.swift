@@ -1,4 +1,5 @@
 import Cocoa
+import Sentry
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -11,6 +12,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 #endif
   
   func applicationDidFinishLaunching(_ notification: Notification) {
+    if let dsn = Bundle.main.infoDictionary?["SentryDSN"] as? String,
+       !dsn.isEmpty,
+       !dsn.hasPrefix("$(") {
+      SentrySDK.start { options in
+        options.dsn = dsn
+        #if DEBUG
+        options.enabled = false
+        #endif
+      }
+    }
+
     NSApplication.shared.setActivationPolicy(.accessory)
     
     Task { @MainActor in
