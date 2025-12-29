@@ -1,15 +1,16 @@
 #!/bin/bash
 set -e
 
-if [ $# -lt 3 ]; then
-  echo "Usage: $0 <archive.zip> <version> <download_url>"
+if [ $# -lt 4 ]; then
+  echo "Usage: $0 <archive.zip> <version> <build_number> <download_url>"
   exit 1
 fi
 
 ARCHIVE="$1"
 VERSION="$2"
-DOWNLOAD_URL="$3"
-MIN_SYSTEM_VERSION="${4:-12.0}"
+BUILD_NUMBER="$3"
+DOWNLOAD_URL="$4"
+MIN_SYSTEM_VERSION="${5:-12.0}"
 
 if [ ! -f "$ARCHIVE" ]; then
   echo "Error: Archive not found: $ARCHIVE"
@@ -55,7 +56,7 @@ cat > "${OUTPUT_DIR}/appcast.xml" << EOF
     <item>
       <title>Version ${VERSION}</title>
       <pubDate>${PUB_DATE}</pubDate>
-      <sparkle:version>${VERSION}</sparkle:version>
+      <sparkle:version>${BUILD_NUMBER}</sparkle:version>
       <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>${MIN_SYSTEM_VERSION}</sparkle:minimumSystemVersion>
       <enclosure url="${DOWNLOAD_URL}" sparkle:edSignature="${ED_SIGNATURE}"
@@ -66,6 +67,6 @@ cat > "${OUTPUT_DIR}/appcast.xml" << EOF
 EOF
 
 echo "Generated appcast.xml at ${OUTPUT_DIR}/appcast.xml"
-echo "Version: ${VERSION}"
+echo "Version: ${VERSION} (build ${BUILD_NUMBER})"
 echo "Download URL: ${DOWNLOAD_URL}"
 echo "File size: ${FILE_SIZE}"

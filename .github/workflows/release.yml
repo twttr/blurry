@@ -43,7 +43,7 @@ jobs:
 
       - name: Download Sparkle
         run: |
-          curl -L -o sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz
+          curl -L -o sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/download/2.7.1/Sparkle-2.7.1.tar.xz
           mkdir -p /tmp/Sparkle
           tar -xf sparkle.tar.xz -C /tmp/Sparkle
 
@@ -53,10 +53,12 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
+          BUILD_NUMBER=$(defaults read "$(pwd)/build/Build/Products/Release/Blurry.app/Contents/Info" CFBundleVersion)
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/Blurry-${{ github.ref_name }}.zip"
           OUTPUT_DIR="${{ github.workspace }}" ./scripts/generate-appcast.sh \
             "Blurry-${{ github.ref_name }}.zip" \
             "$VERSION" \
+            "$BUILD_NUMBER" \
             "$DOWNLOAD_URL"
 
       - name: Prepare Appcast for deploy
