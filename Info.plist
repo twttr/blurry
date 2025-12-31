@@ -26,14 +26,6 @@
 	<string></string>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>Blurry needs screen recording permission to capture screenshots for the picture effect and to select windows.</string>
-	<key>SUFeedURL</key>
-	<string>https://twttr.github.io/blurry/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>wXt9x7GEEOpGCyK2lgyZvTyd0LbptuensxzC59Bqvu8=</string>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
-	<key>SUAutomaticallyUpdate</key>
-	<false/>
 	<key>SentryDSN</key>
 	<string>$(SENTRY_DSN)</string>
 </dict>

@@ -12,16 +12,6 @@ class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDeleg
   private var parameterManager: EffectParameterManager!
   private var configurationManager: ConfigurationManager!
   private var preScreenShareEnabledStates: [UUID: Bool]?
-#if ENABLE_SPARKLE
-  private var sparkleUpdater: SparkleUpdater?
-
-  init(areaManager: AreaManager, sparkleUpdater: SparkleUpdater?) {
-    self.areaManager = areaManager
-    self.sparkleUpdater = sparkleUpdater
-    super.init()
-    commonInit()
-  }
-#endif
 
   init(areaManager: AreaManager) {
     self.areaManager = areaManager
@@ -176,18 +166,6 @@ class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDeleg
     menu.delegate = self
     statusItem.menu = menu
   }
-
-  func menuWillOpen(_ menu: NSMenu) {
-#if ENABLE_SPARKLE
-    sparkleUpdater?.checkForUpdatesInBackground()
-#endif
-  }
-
-#if ENABLE_SPARKLE
-  @objc func checkForUpdates() {
-    sparkleUpdater?.checkForUpdates()
-  }
-#endif
   
   // MARK: - AreaMenuDelegate Implementation
   

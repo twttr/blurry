@@ -24,7 +24,6 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) ENABLE_SPARKLE' \
             SENTRY_DSN="$SENTRY_DSN"
 
       - name: Create DMG
@@ -35,44 +34,11 @@ jobs:
           hdiutil create -volname "Blurry" -srcfolder dmg-contents \
             -ov -format UDZO "Blurry-${{ github.ref_name }}.dmg"
 
-      - name: Create ZIP for Sparkle
+      - name: Create ZIP
         run: |
           cd "build/Build/Products/Release"
           zip -r -y "../../../../Blurry-${{ github.ref_name }}.zip" Blurry.app
           cd -
-
-      - name: Download Sparkle
-        run: |
-          curl -L -o sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/download/2.7.1/Sparkle-2.7.1.tar.xz
-          mkdir -p /tmp/Sparkle
-          tar -xf sparkle.tar.xz -C /tmp/Sparkle
-
-      - name: Sign and Generate Appcast
-        env:
-          SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          BUILD_NUMBER=$(defaults read "$(pwd)/build/Build/Products/Release/Blurry.app/Contents/Info" CFBundleVersion)
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/Blurry-${{ github.ref_name }}.zip"
-          OUTPUT_DIR="${{ github.workspace }}" ./scripts/generate-appcast.sh \
-            "Blurry-${{ github.ref_name }}.zip" \
-            "$VERSION" \
-            "$BUILD_NUMBER" \
-            "$DOWNLOAD_URL"
-
-      - name: Prepare Appcast for deploy
-        run: |
-          mkdir -p gh-pages-deploy
-          cp appcast.xml gh-pages-deploy/
-
-      - name: Deploy Appcast to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gh-pages-deploy
-          publish_branch: gh-pages
-          keep_files: true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

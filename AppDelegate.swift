@@ -7,9 +7,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   private let areaManager = AreaManager.shared
   private var restorationRetryCount = 0
   private let maxRetryAttempts = 2
-#if ENABLE_SPARKLE
-  private var sparkleUpdater: SparkleUpdater?
-#endif
   
   func applicationDidFinishLaunching(_ notification: Notification) {
     if let dsn = Bundle.main.infoDictionary?["SentryDSN"] as? String,
@@ -39,13 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         await restoreBlurAreas()
       }
       
-#if ENABLE_SPARKLE
-      sparkleUpdater = SparkleUpdater()
-      statusBarController = StatusBarController(areaManager: areaManager, sparkleUpdater: sparkleUpdater)
-      sparkleUpdater?.checkForUpdatesInBackground()
-#else
       statusBarController = StatusBarController(areaManager: areaManager)
-#endif
       HotkeyManager.shared.registerHotkey()
       setupDisplayMonitoring()
     }

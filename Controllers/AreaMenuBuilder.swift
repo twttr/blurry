@@ -97,16 +97,6 @@ class AreaMenuBuilder {
     submenu.addItem(NSMenuItem.separator())
 #endif
 
-#if ENABLE_SPARKLE
-    submenu.addItem(
-      createMenuItem(
-        title: String(localized: "Check for Updates..."),
-        action: #selector(AreaMenuDelegate.checkForUpdates)
-      )
-    )
-    submenu.addItem(NSMenuItem.separator())
-#endif
-
     submenu.addItem(
       createMenuItem(
         title: String(localized: "Export"),
