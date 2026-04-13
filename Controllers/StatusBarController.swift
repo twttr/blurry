@@ -239,7 +239,7 @@ class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDeleg
     var area = BlurArea(
       name: name,
       frame: rect,
-      effectType: .blur(radius: 20.0)
+      effectType: .blur(intensity: .medium)
     )
     area.displayID = displayID
     
@@ -340,9 +340,14 @@ class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDeleg
   
   @objc func removeArea(_ sender: NSMenuItem) {
     guard let areaID = sender.representedObject as? UUID else { return }
-    
+
+    if let area = areaManager.areas.first(where: { $0.id == areaID }),
+       case .picture(let imageRef) = area.effectType {
+      ImageStorageManager.shared.deleteImage(filename: imageRef)
+    }
+
     MouseTracker.shared.stopTracking(areaID: areaID)
-    
+
     OverlayWindowManager.shared.removeWindow(for: areaID)
     areaManager.remove(withID: areaID)
   }
@@ -453,11 +458,11 @@ class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDeleg
       OverlayWindowManager.shared.getWindow(for: areaID)?.orderOut(nil)
       
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-        guard let imageData = self?.captureScreenshot(of: area.frame) else {
+        guard let imageRef = self?.captureAndSaveScreenshot(of: area.frame, areaID: areaID) else {
           OverlayWindowManager.shared.getWindow(for: areaID)?.orderFront(nil)
           return
         }
-        self?.switchEffect(for: areaID, to: effectType, imageData: imageData)
+        self?.switchEffect(for: areaID, to: effectType, imageRef: imageRef)
       }
       return
     }
@@ -465,11 +470,17 @@ class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDeleg
     switchEffect(for: areaID, to: effectType)
   }
   
-  private func captureScreenshot(of frame: CGRect) -> Data? {
+  private func captureAndSaveScreenshot(of frame: CGRect, areaID: UUID) -> String? {
+    if !WindowEnumerator.hasScreenRecordingPermission() {
+      WindowEnumerator.requestScreenRecordingPermission()
+      AppLogger.shared.warning("Screen Recording permission not granted — cannot capture screenshot")
+      return nil
+    }
+
     let mainDisplayBounds = CGDisplayBounds(CGMainDisplayID())
     let quartzY = mainDisplayBounds.height - frame.origin.y - frame.height
     let quartzFrame = CGRect(x: frame.origin.x, y: quartzY, width: frame.width, height: frame.height)
-    
+
     guard let cgImage = CGWindowListCreateImage(
       quartzFrame,
       .optionOnScreenBelowWindow,
@@ -478,37 +489,37 @@ class StatusBarController: NSObject, AreaMenuDelegate, ConfigurationManagerDeleg
     ) else {
       return nil
     }
-    
+
     let nsImage = NSImage(cgImage: cgImage, size: frame.size)
     guard let tiffData = nsImage.tiffRepresentation,
           let bitmap = NSBitmapImageRep(data: tiffData),
           let pngData = bitmap.representation(using: .png, properties: [:]) else {
       return nil
     }
-    
-    return pngData
+
+    return ImageStorageManager.shared.saveImage(pngData, id: areaID)
   }
-  
-  private func switchEffect(for areaID: UUID, to newEffect: EffectType, imageData: Data? = nil) {
+
+  private func switchEffect(for areaID: UUID, to newEffect: EffectType, imageRef: String? = nil) {
     guard let areaIndex = areaManager.areas.firstIndex(where: { $0.id == areaID }) else {
       return
     }
-    
+
     var area = areaManager.areas[areaIndex]
-    
+
     let preservedFrame = area.frame
     let preservedName = area.name
     let preservedIsEnabled = area.isEnabled
     let preservedDisableOnHover = area.disableOnHover
-    
+
     switch newEffect {
     case .blur:
-      area.effectType = .blur(radius: 20.0)
+      area.effectType = .blur(intensity: .medium)
     case .darken:
       area.effectType = .darken(amount: 0.5)
     case .picture:
-      if let imageData = imageData {
-        area.effectType = .picture(imageData: imageData)
+      if let imageRef = imageRef {
+        area.effectType = .picture(imageRef: imageRef)
       } else {
         return
       }

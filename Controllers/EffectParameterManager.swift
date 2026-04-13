@@ -38,18 +38,8 @@ class EffectParameterManager {
   
   /// Update blur effect parameters based on level
   private func updateBlurParameters(for area: inout BlurArea, level: String) {
-    let radius: Double
-    switch level {
-    case "low":
-      radius = 10.0
-    case "medium":
-      radius = 20.0
-    case "high":
-      radius = 30.0
-    default:
-      return
-    }
-    area.effectType = .blur(radius: radius)
+    guard let intensity = BlurIntensity(rawValue: level) else { return }
+    area.effectType = .blur(intensity: intensity)
   }
   
   /// Update darken effect parameters based on level

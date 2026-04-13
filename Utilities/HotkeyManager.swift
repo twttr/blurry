@@ -35,8 +35,8 @@ class HotkeyManager {
     guard status == noErr else { return }
     
     let hotKeyID = EventHotKeyID(signature: OSType(0x424C5259), id: 1)
-    
-    RegisterEventHotKey(
+
+    let registerStatus = RegisterEventHotKey(
       UInt32(kVK_ANSI_B),
       UInt32(cmdKey | shiftKey),
       hotKeyID,
@@ -44,11 +44,14 @@ class HotkeyManager {
       0,
       &hotKeyRef
     )
+    if registerStatus != noErr {
+      AppLogger.shared.error("Failed to register hotkey: \(registerStatus)")
+    }
   }
-  
+
   private nonisolated func handleHotKeyEvent(_ event: EventRef?) -> OSStatus {
-    Task { @MainActor in
-      self.onHotkeyPressed?()
+    Task { @MainActor [weak self] in
+      self?.onHotkeyPressed?()
     }
     return noErr
   }

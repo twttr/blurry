@@ -53,6 +53,7 @@
 				AppLogger.swift,
 				DisplayManager.swift,
 				HotkeyManager.swift,
+				ImageStorageManager.swift,
 				KeyMonitor.swift,
 				MouseTracker.swift,
 				NotificationManager.swift,

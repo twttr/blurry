@@ -22,18 +22,8 @@
     "Add New Area" : {
 
     },
-    "Area '%@' has empty image data" : {
+    "Area '%@' has empty image reference" : {
 
-    },
-    "Area '%@' has invalid blur radius: %lf" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Area '%1$@' has invalid blur radius: %2$lf"
-          }
-        }
-      }
     },
     "Area '%@' has invalid darken amount: %lf" : {
       "localizations" : {
@@ -68,6 +58,9 @@
 
     },
     "Blurry" : {
+
+    },
+    "Blurry needs Screen Recording permission to detect windows. Please grant access in System Settings > Privacy & Security > Screen Recording." : {
 
     },
     "Cancel" : {
@@ -200,6 +193,9 @@
 
     },
     "Resize Area" : {
+
+    },
+    "Screen Recording Permission Required" : {
 
     },
     "Select" : {

@@ -10,8 +10,17 @@ class VisualWindowPicker: NSObject {
   /// Interactively pick a window with visual feedback
   /// - Returns: The selected WindowInfo, or nil if cancelled
   func pickWindow() async -> WindowInfo? {
+    if !WindowEnumerator.hasScreenRecordingPermission() {
+      WindowEnumerator.requestScreenRecordingPermission()
+      await NotificationManager.shared.send(
+        title: String(localized: "Screen Recording Permission Required"),
+        body: String(localized: "Blurry needs Screen Recording permission to detect windows. Please grant access in System Settings > Privacy & Security > Screen Recording.")
+      )
+      return nil
+    }
+
     self.currentWindows = getAvailableWindows()
-    
+
     if currentWindows.isEmpty {
       await NotificationManager.shared.send(
         title: String(localized: "No Windows Available"),
