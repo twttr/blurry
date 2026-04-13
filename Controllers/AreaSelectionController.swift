@@ -6,27 +6,33 @@ class AreaSelectionController {
   private var overlayViews: [OverlayView] = []
   private var keyMonitor = KeyMonitor()
   private var currentOnCancel: (() -> Void)?
-  
-  /// Begins interactive area selection with async/await
-  /// - Returns: A tuple containing the selected rect and user-provided name, or nil if cancelled
+  private var continuationResumed = false
+
   func beginSelection() async -> (rect: CGRect, name: String)? {
+    continuationResumed = false
     return await withCheckedContinuation { continuation in
-      showOverlay { rect, name in
+      showOverlay { [weak self] rect, name in
+        guard self?.continuationResumed == false else { return }
+        self?.continuationResumed = true
         continuation.resume(returning: (rect, name))
-      } onCancel: {
+      } onCancel: { [weak self] in
+        guard self?.continuationResumed == false else { return }
+        self?.continuationResumed = true
         continuation.resume(returning: nil)
       }
     }
   }
-  
-  /// Begins interactive area reselection with async/await
-  /// - Parameter existingArea: The area being resized
-  /// - Returns: The new rect, or nil if cancelled
+
   func beginReselection(existingArea: BlurArea) async -> CGRect? {
+    continuationResumed = false
     return await withCheckedContinuation { continuation in
-      showOverlay(existingArea: existingArea) { rect, _ in
+      showOverlay(existingArea: existingArea) { [weak self] rect, _ in
+        guard self?.continuationResumed == false else { return }
+        self?.continuationResumed = true
         continuation.resume(returning: rect)
-      } onCancel: {
+      } onCancel: { [weak self] in
+        guard self?.continuationResumed == false else { return }
+        self?.continuationResumed = true
         continuation.resume(returning: nil)
       }
     }
@@ -95,13 +101,13 @@ class AreaSelectionController {
     }
   }
   
-  func handleSelection(_ rect: CGRect, isReselection: Bool, onComplete: @escaping (CGRect, String) -> Void) {
+  func handleSelection(_ rect: CGRect, isReselection: Bool, onComplete: @escaping (CGRect, String) -> Void, onCancel: @escaping () -> Void) {
     closeOverlay()
-    
+
     if isReselection {
       onComplete(rect, "")
     } else {
-      showNamingDialog(for: rect, onComplete: onComplete)
+      showNamingDialog(for: rect, onComplete: onComplete, onCancel: onCancel)
     }
   }
   
@@ -110,7 +116,7 @@ class AreaSelectionController {
     onCancel()
   }
   
-  private func showNamingDialog(for rect: CGRect, onComplete: @escaping (CGRect, String) -> Void) {
+  private func showNamingDialog(for rect: CGRect, onComplete: @escaping (CGRect, String) -> Void, onCancel: @escaping () -> Void) {
     let alert = NSAlert()
     alert.messageText = String(localized: "Name This Area")
     alert.informativeText = String(localized: "Enter a name for the selected area:")
@@ -124,16 +130,17 @@ class AreaSelectionController {
 
     alert.addButton(withTitle: String(localized: "OK"))
     alert.addButton(withTitle: String(localized: "Cancel"))
-    
+
     let response = alert.runModal()
-    
-    let shouldCallHandler = response == .alertFirstButtonReturn
-    let name = shouldCallHandler ? textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines) : ""
-    
-    DispatchQueue.main.async {
-      if shouldCallHandler && !name.isEmpty {
-        onComplete(rect, name)
-      }
+
+    let name = response == .alertFirstButtonReturn
+      ? textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+      : ""
+
+    if response == .alertFirstButtonReturn && !name.isEmpty {
+      onComplete(rect, name)
+    } else {
+      onCancel()
     }
   }
 }
@@ -212,9 +219,9 @@ private class OverlayView: NSView {
     currentPoint = nil
     
     if width > 10 && height > 10 {
-      if let onComplete = onComplete {
+      if let onComplete = onComplete, let onCancel = onCancel {
         let isReselection = existingArea != nil
-        controller?.handleSelection(screenRect, isReselection: isReselection, onComplete: onComplete)
+        controller?.handleSelection(screenRect, isReselection: isReselection, onComplete: onComplete, onCancel: onCancel)
       }
     } else {
       if let onCancel = onCancel {

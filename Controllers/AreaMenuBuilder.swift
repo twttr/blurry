@@ -173,13 +173,13 @@ class AreaMenuBuilder {
     let submenu = NSMenu()
     
     switch area.effectType {
-    case .blur(let radius):
+    case .blur(let intensity):
       submenu.addItem(createParameterItem(title: String(localized: "Low"), areaID: area.id, level: "low",
-                                          isSelected: radius == 10.0))
+                                          isSelected: intensity == .low))
       submenu.addItem(createParameterItem(title: String(localized: "Medium"), areaID: area.id, level: "medium",
-                                          isSelected: radius == 20.0))
+                                          isSelected: intensity == .medium))
       submenu.addItem(createParameterItem(title: String(localized: "High"), areaID: area.id, level: "high",
-                                          isSelected: radius == 30.0))
+                                          isSelected: intensity == .high))
       
     case .darken(let amount):
       submenu.addItem(createParameterItem(title: String(localized: "Low"), areaID: area.id, level: "low",
@@ -204,7 +204,7 @@ class AreaMenuBuilder {
     let blurItem = createMenuItem(
       title: String(localized: "Blur"),
       action: #selector(AreaMenuDelegate.changeEffect(_:)),
-      representedObject: ["areaID": area.id, "effectType": EffectType.blur(radius: 20.0)] as [String: Any]
+      representedObject: ["areaID": area.id, "effectType": EffectType.blur(intensity: .medium)] as [String: Any]
     )
     blurItem.state = area.effectType.isBlur ? .on : .off
     submenu.addItem(blurItem)
@@ -220,7 +220,7 @@ class AreaMenuBuilder {
     let pictureItem = createMenuItem(
       title: String(localized: "Picture"),
       action: #selector(AreaMenuDelegate.changeEffect(_:)),
-      representedObject: ["areaID": area.id, "effectType": EffectType.picture(imageData: Data())] as [String: Any]
+      representedObject: ["areaID": area.id, "effectType": EffectType.picture(imageRef: "")] as [String: Any]
     )
     pictureItem.state = area.effectType.isPicture ? .on : .off
     submenu.addItem(pictureItem)

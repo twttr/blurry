@@ -1,20 +1,26 @@
 import Cocoa
 
-/// Consolidated window enumeration logic with configurable filtering levels
 enum WindowEnumerator {
-  /// Filtering strictness level
   enum FilterLevel {
     case basic
     case strict
   }
-  
-  /// Known overlay apps to skip in strict mode
+
   private static let overlayApps = ["Magnet", "Rectangle", "BetterSnapTool", "LanguageTool for Desktop"]
-  
-  /// Get available windows with specified filtering level
-  /// - Parameter filterLevel: The filtering strictness to apply
-  /// - Returns: Array of WindowInfo objects for available windows
+
+  static func hasScreenRecordingPermission() -> Bool {
+    return CGPreflightScreenCaptureAccess()
+  }
+
+  static func requestScreenRecordingPermission() {
+    CGRequestScreenCaptureAccess()
+  }
+
   static func getAvailableWindows(filterLevel: FilterLevel = .basic) -> [WindowInfo] {
+    if !hasScreenRecordingPermission() {
+      AppLogger.shared.warning("Screen Recording permission not granted — window list may be incomplete")
+    }
+
     guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
       return []
     }

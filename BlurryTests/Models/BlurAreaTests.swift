@@ -11,7 +11,7 @@ final class BlurAreaTests: XCTestCase {
       id: id,
       name: "Test Area",
       frame: frame,
-      effectType: .blur(radius: 20.0),
+      effectType: .blur(intensity: .medium),
       isEnabled: true,
       disableOnHover: false,
       displayID: 1,
@@ -32,7 +32,7 @@ final class BlurAreaTests: XCTestCase {
     let area = BlurArea(
       name: "Test",
       frame: CGRect(x: 0, y: 0, width: 100, height: 100),
-      effectType: .blur(radius: 10.0)
+      effectType: .blur(intensity: .low)
     )
 
     XCTAssertTrue(area.isEnabled)
@@ -70,13 +70,13 @@ final class BlurAreaTests: XCTestCase {
   }
 
   func testEncodeDecodeBlurEffect() throws {
-    let original = TestHelpers.makeBlurArea(effectType: .blur(radius: 25.5))
+    let original = TestHelpers.makeBlurArea(effectType: .blur(intensity: .high))
 
     let data = try TestHelpers.encodeToJSON(original)
     let decoded = try TestHelpers.decodeFromJSON(data, as: BlurArea.self)
 
-    if case .blur(let radius) = decoded.effectType {
-      XCTAssertEqual(radius, 25.5, accuracy: 0.001)
+    if case .blur(let intensity) = decoded.effectType {
+      XCTAssertEqual(intensity, .high)
     } else {
       XCTFail("Expected blur effect type")
     }
@@ -96,14 +96,13 @@ final class BlurAreaTests: XCTestCase {
   }
 
   func testEncodeDecodePictureEffect() throws {
-    let imageData = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
-    let original = TestHelpers.makeBlurArea(effectType: .picture(imageData: imageData))
+    let original = TestHelpers.makeBlurArea(effectType: .picture(imageRef: "test-image.png"))
 
     let data = try TestHelpers.encodeToJSON(original)
     let decoded = try TestHelpers.decodeFromJSON(data, as: BlurArea.self)
 
-    if case .picture(let decodedData) = decoded.effectType {
-      XCTAssertEqual(decodedData, imageData)
+    if case .picture(let decodedRef) = decoded.effectType {
+      XCTAssertEqual(decodedRef, "test-image.png")
     } else {
       XCTFail("Expected picture effect type")
     }

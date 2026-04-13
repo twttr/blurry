@@ -16,8 +16,17 @@ class WindowPicker {
   /// Shows a window selection dialog
   /// - Returns: The selected WindowInfo, or nil if cancelled or no windows available
   static func showWindowSelectionDialog() async -> WindowInfo? {
+    if !WindowEnumerator.hasScreenRecordingPermission() {
+      WindowEnumerator.requestScreenRecordingPermission()
+      await NotificationManager.shared.send(
+        title: String(localized: "Screen Recording Permission Required"),
+        body: String(localized: "Blurry needs Screen Recording permission to detect windows. Please grant access in System Settings > Privacy & Security > Screen Recording.")
+      )
+      return nil
+    }
+
     let windows = getAvailableWindows()
-    
+
     if windows.isEmpty {
       await NotificationManager.shared.send(
         title: String(localized: "No Windows Available"),

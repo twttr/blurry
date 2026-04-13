@@ -108,17 +108,15 @@ class ConfigurationManager {
       }
       
       switch area.effectType {
-      case .blur(let radius):
-        if radius <= 0 {
-          return String(localized: "Area '\(area.name)' has invalid blur radius: \(radius)")
-        }
+      case .blur:
+        break
       case .darken(let amount):
         if amount < 0 || amount > 1 {
           return String(localized: "Area '\(area.name)' has invalid darken amount: \(amount)")
         }
-      case .picture(let imageData):
-        if imageData.isEmpty {
-          return String(localized: "Area '\(area.name)' has empty image data")
+      case .picture(let imageRef):
+        if imageRef.isEmpty {
+          return String(localized: "Area '\(area.name)' has empty image reference")
         }
       }
     }

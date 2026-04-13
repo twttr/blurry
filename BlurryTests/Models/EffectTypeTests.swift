@@ -5,13 +5,13 @@ import XCTest
 final class EffectTypeTests: XCTestCase {
 
   func testBlurEncodeDecodeRoundTrip() throws {
-    let original = EffectType.blur(radius: 15.5)
+    let original = EffectType.blur(intensity: .high)
 
     let data = try TestHelpers.encodeToJSON(original)
     let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
 
-    if case .blur(let radius) = decoded {
-      XCTAssertEqual(radius, 15.5, accuracy: 0.001)
+    if case .blur(let intensity) = decoded {
+      XCTAssertEqual(intensity, .high)
     } else {
       XCTFail("Expected blur effect")
     }
@@ -31,48 +31,104 @@ final class EffectTypeTests: XCTestCase {
   }
 
   func testPictureEncodeDecodeRoundTrip() throws {
-    let imageData = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A])
-    let original = EffectType.picture(imageData: imageData)
+    let original = EffectType.picture(imageRef: "test-image.png")
 
     let data = try TestHelpers.encodeToJSON(original)
     let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
 
-    if case .picture(let decodedData) = decoded {
-      XCTAssertEqual(decodedData, imageData)
+    if case .picture(let decodedRef) = decoded {
+      XCTAssertEqual(decodedRef, "test-image.png")
     } else {
       XCTFail("Expected picture effect")
     }
   }
 
+  func testPictureLegacyDataMigration() throws {
+    let legacyJSON = """
+    {"type":"picture","imageData":"iVBORw0KGgo="}
+    """
+    let data = legacyJSON.data(using: .utf8)!
+    let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
+
+    if case .picture(let imageRef) = decoded {
+      XCTAssertFalse(imageRef.isEmpty)
+      XCTAssertTrue(imageRef.hasSuffix(".png"))
+    } else {
+      XCTFail("Expected picture effect from legacy data")
+    }
+  }
+
+  func testBlurLegacyRadiusMigration() throws {
+    let legacyJSON = """
+    {"type":"blur","radius":10.0}
+    """
+    let data = legacyJSON.data(using: .utf8)!
+    let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
+
+    if case .blur(let intensity) = decoded {
+      XCTAssertEqual(intensity, .low)
+    } else {
+      XCTFail("Expected blur effect from legacy radius")
+    }
+  }
+
+  func testBlurLegacyRadiusMigrationHigh() throws {
+    let legacyJSON = """
+    {"type":"blur","radius":30.0}
+    """
+    let data = legacyJSON.data(using: .utf8)!
+    let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
+
+    if case .blur(let intensity) = decoded {
+      XCTAssertEqual(intensity, .high)
+    } else {
+      XCTFail("Expected blur effect from legacy radius")
+    }
+  }
+
+  func testBlurLegacyRadiusMigrationDefault() throws {
+    let legacyJSON = """
+    {"type":"blur","radius":20.0}
+    """
+    let data = legacyJSON.data(using: .utf8)!
+    let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
+
+    if case .blur(let intensity) = decoded {
+      XCTAssertEqual(intensity, .medium)
+    } else {
+      XCTFail("Expected blur effect from legacy radius")
+    }
+  }
+
   func testIsBlur() {
-    XCTAssertTrue(EffectType.blur(radius: 10).isBlur)
+    XCTAssertTrue(EffectType.blur(intensity: .medium).isBlur)
     XCTAssertFalse(EffectType.darken(amount: 0.5).isBlur)
-    XCTAssertFalse(EffectType.picture(imageData: Data()).isBlur)
+    XCTAssertFalse(EffectType.picture(imageRef: "test.png").isBlur)
   }
 
   func testIsDarken() {
-    XCTAssertFalse(EffectType.blur(radius: 10).isDarken)
+    XCTAssertFalse(EffectType.blur(intensity: .medium).isDarken)
     XCTAssertTrue(EffectType.darken(amount: 0.5).isDarken)
-    XCTAssertFalse(EffectType.picture(imageData: Data()).isDarken)
+    XCTAssertFalse(EffectType.picture(imageRef: "test.png").isDarken)
   }
 
   func testIsPicture() {
-    XCTAssertFalse(EffectType.blur(radius: 10).isPicture)
+    XCTAssertFalse(EffectType.blur(intensity: .medium).isPicture)
     XCTAssertFalse(EffectType.darken(amount: 0.5).isPicture)
-    XCTAssertTrue(EffectType.picture(imageData: Data()).isPicture)
+    XCTAssertTrue(EffectType.picture(imageRef: "test.png").isPicture)
   }
 
   func testTypeName() {
-    XCTAssertEqual(EffectType.blur(radius: 10).typeName, "blur")
+    XCTAssertEqual(EffectType.blur(intensity: .medium).typeName, "blur")
     XCTAssertEqual(EffectType.darken(amount: 0.5).typeName, "darken")
-    XCTAssertEqual(EffectType.picture(imageData: Data()).typeName, "picture")
+    XCTAssertEqual(EffectType.picture(imageRef: "test.png").typeName, "picture")
   }
 
   func testIsSameKindBlur() {
-    let blur1 = EffectType.blur(radius: 10)
-    let blur2 = EffectType.blur(radius: 30)
+    let blur1 = EffectType.blur(intensity: .low)
+    let blur2 = EffectType.blur(intensity: .high)
     let darken = EffectType.darken(amount: 0.5)
-    let picture = EffectType.picture(imageData: Data())
+    let picture = EffectType.picture(imageRef: "test.png")
 
     XCTAssertTrue(blur1.isSameKind(as: blur2))
     XCTAssertFalse(blur1.isSameKind(as: darken))
@@ -82,8 +138,8 @@ final class EffectTypeTests: XCTestCase {
   func testIsSameKindDarken() {
     let darken1 = EffectType.darken(amount: 0.3)
     let darken2 = EffectType.darken(amount: 0.7)
-    let blur = EffectType.blur(radius: 10)
-    let picture = EffectType.picture(imageData: Data())
+    let blur = EffectType.blur(intensity: .medium)
+    let picture = EffectType.picture(imageRef: "test.png")
 
     XCTAssertTrue(darken1.isSameKind(as: darken2))
     XCTAssertFalse(darken1.isSameKind(as: blur))
@@ -91,9 +147,9 @@ final class EffectTypeTests: XCTestCase {
   }
 
   func testIsSameKindPicture() {
-    let picture1 = EffectType.picture(imageData: Data([0x01]))
-    let picture2 = EffectType.picture(imageData: Data([0x02, 0x03]))
-    let blur = EffectType.blur(radius: 10)
+    let picture1 = EffectType.picture(imageRef: "img1.png")
+    let picture2 = EffectType.picture(imageRef: "img2.png")
+    let blur = EffectType.blur(intensity: .medium)
     let darken = EffectType.darken(amount: 0.5)
 
     XCTAssertTrue(picture1.isSameKind(as: picture2))
@@ -101,18 +157,16 @@ final class EffectTypeTests: XCTestCase {
     XCTAssertFalse(picture1.isSameKind(as: darken))
   }
 
-  func testBlurWithDifferentRadii() throws {
-    let radii: [Double] = [10.0, 20.0, 30.0, 0.5, 100.0]
-
-    for radius in radii {
-      let original = EffectType.blur(radius: radius)
+  func testBlurAllIntensities() throws {
+    for intensity in BlurIntensity.allCases {
+      let original = EffectType.blur(intensity: intensity)
       let data = try TestHelpers.encodeToJSON(original)
       let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
 
-      if case .blur(let decodedRadius) = decoded {
-        XCTAssertEqual(decodedRadius, radius, accuracy: 0.001)
+      if case .blur(let decodedIntensity) = decoded {
+        XCTAssertEqual(decodedIntensity, intensity)
       } else {
-        XCTFail("Expected blur effect for radius \(radius)")
+        XCTFail("Expected blur effect for intensity \(intensity)")
       }
     }
   }
@@ -133,31 +187,16 @@ final class EffectTypeTests: XCTestCase {
     }
   }
 
-  func testPictureWithEmptyData() throws {
-    let original = EffectType.picture(imageData: Data())
+  func testPictureWithEmptyRef() throws {
+    let original = EffectType.picture(imageRef: "")
 
     let data = try TestHelpers.encodeToJSON(original)
     let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
 
-    if case .picture(let decodedData) = decoded {
-      XCTAssertTrue(decodedData.isEmpty)
+    if case .picture(let decodedRef) = decoded {
+      XCTAssertTrue(decodedRef.isEmpty)
     } else {
-      XCTFail("Expected picture effect with empty data")
-    }
-  }
-
-  func testPictureWithLargeData() throws {
-    let largeData = Data(repeating: 0xFF, count: 1024 * 10)
-    let original = EffectType.picture(imageData: largeData)
-
-    let data = try TestHelpers.encodeToJSON(original)
-    let decoded = try TestHelpers.decodeFromJSON(data, as: EffectType.self)
-
-    if case .picture(let decodedData) = decoded {
-      XCTAssertEqual(decodedData.count, largeData.count)
-      XCTAssertEqual(decodedData, largeData)
-    } else {
-      XCTFail("Expected picture effect with large data")
+      XCTFail("Expected picture effect with empty ref")
     }
   }
 }
